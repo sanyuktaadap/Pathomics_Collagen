@@ -27,24 +27,27 @@ files = glob.glob(files+"*")
 
 # loop through patients
 for file in files:
-	filename = file.split("/")[-1][:-4] + "_"
-	print(filename)
+    filename = file.split("/")[-1][:-4] + "_"
+    print(filename)
 
-	patches = glob.glob(features+filename+"*")
-	file_features = np.zeros(36)
-	for patch in patches:
-		flag = -1
-		with open(patch, newline='') as csvfile:
-			spamreader = csv.reader(csvfile)
-			for row in spamreader:
-				if flag == -1:
-					array = row
-					for index in range(1, len(array), 2):
-						file_features[index] = max(file_features[index], float(array[index]))
-					for index in range(0, len(array), 2):
-						file_features[index] += float(array[index])
-	for index in range(0, len(array), 2):
-		file_features[index] = file_features[index] / len(patches)
-	with open(args.output+filename[:len(filename)-1]+".csv", mode='w', newline='') as csvfile:
-		writer = csv.writer(csvfile)
-		writer.writerow(file_features)
+    patches = glob.glob(features+filename+"*")
+    #if len(patches) == 0:
+    #    continue
+    
+    file_features = np.zeros(36)
+    for patch in patches:
+        flag = -1
+        with open(patch, newline='') as csvfile:
+            spamreader = csv.reader(csvfile)
+            for row in spamreader:
+                if flag == -1:
+                    array = row
+                    for index in range(1, len(array), 2):
+                        file_features[index] = max(file_features[index], float(array[index]))
+                    for index in range(0, len(array), 2):
+                        file_features[index] += float(array[index])
+    for index in range(0, len(array), 2):
+        file_features[index] = file_features[index] / len(patches)
+    with open(args.output+filename[:len(filename)-1]+".csv", mode='w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(file_features)

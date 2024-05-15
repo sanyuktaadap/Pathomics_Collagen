@@ -37,10 +37,12 @@ parser.add_argument('--output_feature', help='Input masks', default='results/pat
 args = parser.parse_args()
 patches_folder = args.input_patch
 mask_folder = args.input_mask
-patches_files = glob.glob(patches_folder+"*png")
+patches_files = glob.glob(patches_folder+"*png")[:100]
 
 for file in patches_files:
 	print(file)
+	if os.path.isfile(mask_folder+file.split("/")[-1]) == 0:
+		continue
 	features = []
 
 	# read patch and mask
