@@ -52,10 +52,9 @@ def patch_extraction(wsi_path, output_path, tile_size=3000):
 
 
 # command to extract patches
-input_path = "/home/ubuntu/tcga_ec/files/"
-output_path = "/home/ubuntu/Pathomics_Collagen/data/patches/"
+input_path = ""
+output_path = ""
 files = glob.glob(input_path + "*")
-files = files[180:200]
 print(files)
 for file in files:
     print(file)
