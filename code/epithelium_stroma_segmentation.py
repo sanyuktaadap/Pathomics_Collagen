@@ -22,11 +22,8 @@ from torch.utils.data import DataLoader
 
 # parameters
 model_path = "./epi_seg_unet.pth"
-input_path = "/home/ubuntu/Pathomics_Collagen/data/patches/"
-output_path = "/home/ubuntu/Pathomics_Collagen/data/masks/"
-#model_path = "../../ovarian_cancer_model_files/epi_seg_unet.pth"
-#input_path = "../../sample_patches/"
-#output_path = "../../sample_patches_output/"
+input_path = ""
+output_path = ""
 image_size = 3000
 input_image_size = 750
 
@@ -108,7 +105,6 @@ def save_patch_epithelium_stroma_mask(patch, output_path):
 # run code
 if __name__ == '__main__':
     patches = glob(input_path + "*")
-    patches = patches[45000:]
     for patch in patches:
         filename = patch.split("/")[-1]
         print(filename)
