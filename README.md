@@ -35,3 +35,7 @@ b. <b>Epithelium/Stroma segmentation</b> - To segment the epithelium/stromal reg
 As described in the manuscript, for extracting the collagen features run the file (code/main_patchLevelFeatures.py) that generates the Collagen Fiber Orientation Disorder map for each tile extracted. The feature maps will be stored over here 'results/patches'.
 <br><br>
 After obtaining the feature maps for each tile, run the file (code/main_patientLevelFeatures.py) that gives patient-level features (mean and maximum) for each patient, giving a total of 36 features. The features for each patient will be stored over here 'results/features' which can be used for downstream tasks like survival analysis etc.<br><br>
+
+
+## License and Usage
+Madabhushi Lab - This code is made available under Apache 2.0 with Commons Clause License and is available for non-commercial academic purposes.
