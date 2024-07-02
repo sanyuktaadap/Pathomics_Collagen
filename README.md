@@ -29,10 +29,10 @@ For visualizing collagen fibers for some patches before feature extraction, plea
 
 ## Running the code
 1. <b>Preprocessing steps</b><br>
-a. <b>Extracting tiles from H&E-stained Whole Slide Images</b> - This extracts patches from the whole slide image of size 3000x3000-pixel. Run the python file 'python3 code/extract_patches.py' (specify the 'input_path' to the location where whole slide images exist and 'output_path' where you want to store the patches (keep it 'data/patches')).<br>
+a. <b>Extracting tiles from H&E-stained Whole Slide Images</b> - This extracts patches from the whole slide image of size 3000x3000-pixel. Run the python file 'python3 code/extract_patches.py' (specify the 'input_path' to the location where whole slide images exist and 'output_path' where you want to store the patches (keep it <b>'data/patches'</b>)).<br>
 
-    b. <b>Epithelium/Stroma segmentation</b> - To segment the epithelium/stromal regions on the patches extracted above, run the pretrained epithelium/stroma model 'python3 code/epithelium_stroma_segmentation.py'. The model weights file is located at 'code/epi_seg_unet.pth' (specify the 'input_path' to the location where patches are extracted and 'output_path' where you want to store the epithelium/stroma segmentation masks (keep it 'data/masks')).<br>
-In the epithelium/stroma mask, the white region correspond to the tumor/epithelium and the black regions correspond to the stromal regions. We will use the black regions for segmenting collagen fibers and the following code automatically handles it (255-epi_stroma_mask)
+    b. <b>Epithelium/Stroma segmentation</b> - To segment the epithelium/stromal regions on the patches extracted above, run the pretrained epithelium/stroma model 'python3 code/epithelium_stroma_segmentation.py'. The model weights file are located at 'code/epi_seg_unet.pth' (specify the 'input_path' to the location where patches are extracted and 'output_path' where you want to store the epithelium/stroma segmentation masks (keep it <b>'data/masks'</b>)).<br>
+In the epithelium/stroma mask, the white regions correspond to the tumor/epithelium areas and the black regions correspond to the stromal areas. We will use the black regions for segmenting collagen fibers and the following code automatically handles it (255-epi_stroma_mask).
 
 
 2. <b>Extracting collagen features</b><br>
