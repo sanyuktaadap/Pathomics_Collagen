@@ -41,5 +41,9 @@ As described in the manuscript, for extracting the collagen features run the fil
 After obtaining the feature maps for each tile, run the file (code/main_patientLevelFeatures.py) that gives patient-level features (mean and maximum) for each patient, giving a total of 36 features. The features for each patient will be stored over here 'results/features' which can be used for downstream tasks like survival analysis etc.<br><br>
 
 
+## Survival analysis
+Using the extracted features, use the notebook 'survival_analysis.ipynb' for an example demo for running the survival analysis pipeline.
+
+
 ## License and Usage
 Madabhushi Lab - This code is made available under Apache 2.0 with Commons Clause License and is available for non-commercial academic purposes.
