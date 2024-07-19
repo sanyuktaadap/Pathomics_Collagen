@@ -95,14 +95,6 @@ for file in patches_files:
 								orient_occur_feats = disorder_feat_extract(inwin_colg_orient, inwin_colg_area, orient_num, 1)
 								if orient_occur_feats is not None:
 									map[win_y // step_size, win_x // step_size, :] = np.array(list(orient_occur_feats.values()))
-		
-		# save heatmaps and features
-		#if win_size == 200:
-		#	np.save(args.output_heatmap_win200+file.split("/")[-1][:-4]+".npy", map[:,:,4].T)
-		#elif win_size == 400:
-		#	np.save(args.output_heatmap_win400+file.split("/")[-1][:-4]+".npy", map[:,:,4].T)
-		#else:
-		#	np.save(args.output_heatmap_win600+file.split("/")[-1][:-4]+".npy", map[:,:,4].T)
 		mean = np.mean(map[:,:,4])
 		max = np.max(map[:,:,4])
 		features.append(mean)
@@ -165,14 +157,6 @@ for file in patches_files:
 								orient_occur_feats = disorder_feat_extract(inwin_colg_orient, inwin_colg_area, orient_num, 1)
 								if orient_occur_feats is not None:
 									map[win_y // step_size, win_x // step_size, :] = np.array(list(orient_occur_feats.values()))
-		
-		# save heatmaps and features
-		#if win_size == 200:
-		#	np.save(args.output_heatmap_win200+file.split("/")[-1][:-4]+".npy", map[:,:,4].T)
-		#elif win_size == 400:
-		#	np.save(args.output_heatmap_win400+file.split("/")[-1][:-4]+".npy", map[:,:,4].T)
-		#else:
-		#	np.save(args.output_heatmap_win600+file.split("/")[-1][:-4]+".npy", map[:,:,4].T)
 		mean = np.mean(map[:,:,4])
 		max = np.max(map[:,:,4])
 		features.append(mean)
