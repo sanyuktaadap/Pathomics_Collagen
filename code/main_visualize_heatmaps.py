@@ -88,7 +88,7 @@ for file in patches_files:
 									map[win_y // step_size, win_x // step_size, :] = np.array(list(orient_occur_feats.values()))
 		
 		# save heatmaps and features
-		if win_size == 200:
+		if win_size == 600:
 			heatmap_normalized = cv2.normalize(map[:,:,4].T, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
 			heatmap_uint8 = np.uint8(heatmap_normalized)
 			heatmap_colormap = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
@@ -151,7 +151,7 @@ for file in patches_files:
 									map[win_y // step_size, win_x // step_size, :] = np.array(list(orient_occur_feats.values()))
 		
 		# save heatmaps and features
-		if win_size == 200:
+		if win_size == 600:
 			heatmap_normalized = cv2.normalize(map[:,:,4].T, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
 			heatmap_uint8 = np.uint8(heatmap_normalized)
 			heatmap_colormap = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
