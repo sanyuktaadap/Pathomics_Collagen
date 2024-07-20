@@ -27,6 +27,10 @@ The main steps involved in the Collagen biomarker are as follows:
 For visualizing collagen fibers for some patches before feature extraction, please transfer some patches and epi/stroma masks to 'data/patches_for_visualization' and 'data/masks_for_visualization' directories respectively. Then run the python file 'python3 code/main_visualize_collagen_fibers.py' for saving example collagen fiber masks in the results directory 'results/collagen_fiber_masks'
 
 
+## Plotting heatmaps
+For plotting heatmaps, please transfer some patches and epi/stroma masks to 'data/patches_for_visualization' and 'data/masks_for_visualization' directories respectively. Then run the python file 'python3 code/main_visualize_heatmaps.py' for saving example heatmaps in the results directory 'results/heatmaps_stroma' and 'results/heatmaps_peritumoral'
+
+
 ## Running the code
 1. <b>Preprocessing steps</b><br>
 a. <b>Extracting tiles from H&E-stained Whole Slide Images</b> - This extracts patches from the whole slide image of size 3000x3000-pixel. Run the python file 'python3 code/extract_patches.py' (specify the 'input_path' to the location where whole slide images exist and 'output_path' where you want to store the patches (keep it <b>'data/patches'</b>)).<br>
