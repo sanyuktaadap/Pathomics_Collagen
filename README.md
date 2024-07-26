@@ -4,7 +4,7 @@
 
 
 ## Authors
-Arpit Aggarwal, Mayukhmala Jana, Haojia Li, and Anant Madabhushi<br>
+Arpit Aggarwal, Haojia Li, and Anant Madabhushi<br>
 
 
 ## Packages Required
