@@ -57,5 +57,5 @@ for file in patches_files:
 	image = Image.fromarray(np.array(patch))
 	collagen_mask = collagen_mask.convert("RGBA")
 	image = image.convert("RGBA")
-	new_image = Image.blend(image, collagen_mask, 0.5)
+	new_image = Image.blend(image, collagen_mask, 0.25)
 	new_image.save(output_path+file.split("/")[-1])
