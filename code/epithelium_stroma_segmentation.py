@@ -29,8 +29,8 @@ input_image_size = 750
 
 
 # load model
-#device = torch.device(f'cuda' if torch.cuda.is_available() else 'cpu')
-device = 'cpu'
+device = torch.device(f'cuda' if torch.cuda.is_available() else 'cpu')
+# device = 'cpu'
 net = torch.load(model_path, map_location=device)
 net.eval()
 
@@ -47,7 +47,7 @@ def get_patch_epithelium_stroma_mask(input_path):
     # get output mask
     np_patch = np.array(patch).astype(np.uint8)
     output_patch_mask = np.zeros((h, w)).astype(np.uint8)
-    
+
     for index1 in range(0, h, input_image_size):
         for index2 in range(0, w, input_image_size):
             np_patch_part = np_patch[index1:index1+ input_image_size, index2:index2+ input_image_size]

@@ -10,6 +10,7 @@ import math, sys, time, glob, os
 from openslide import open_slide, deepzoom
 from PIL import ImageStat, Image
 import numpy as np
+from tqdm import tqdm
 print("Header files loaded...")
 
 
@@ -17,25 +18,25 @@ print("Header files loaded...")
 def patch_extraction(wsi_path, output_path, tile_size=3000):
     # read slide
     slide = open_slide(wsi_path)
-    
+
     # using deepzoom read non-empty regions
     dz = deepzoom.DeepZoomGenerator(slide, tile_size=tile_size, overlap=0, limit_bounds=True)
     mask_tile_size = tile_size*slide.level_downsamples[0] // slide.level_downsamples[2]
     dz_level = dz.level_count-1
-    
+
     # get filename
     filename = wsi_path.split("/")[-1]
     filename = filename.split(".")[0]
     filename = filename.replace(" ", "_")
     print(filename)
-    
+
     # read entire slide
     mask = slide.read_region((0, 0), 2, slide.level_dimensions[2]).convert("L")
     fn = lambda x : 0 if x > 200 or x < 50 else 1
     mask = mask.point(fn, mode='1')
-    
+
     # loop through each patch of the slide of size=(tile_size, tile_size)
-    for i in range(dz.level_tiles[dz_level][0]):
+    for i in tqdm(range(dz.level_tiles[dz_level][0])):
         for j in range(dz.level_tiles[dz_level][1]):
             coord = dz.get_tile_coordinates(dz_level, (i, j))
             if coord[2] != (tile_size, tile_size):
@@ -52,8 +53,8 @@ def patch_extraction(wsi_path, output_path, tile_size=3000):
 
 
 # command to extract patches
-input_path = ""
-output_path = ""
+input_path = "data/images/"
+output_path = "data/patches/"
 files = glob.glob(input_path + "*")
 print(files)
 for file in files:

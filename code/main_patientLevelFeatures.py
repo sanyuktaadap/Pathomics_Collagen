@@ -17,13 +17,13 @@ import csv
 # MAIN CODE
 # read patches and masks
 parser = argparse.ArgumentParser()
-parser.add_argument('--input_files', help='Input patches', default='data/files/')
-parser.add_argument('--input_features', help='Input masks', default='results/patches/')
+parser.add_argument('--input_files', help='Input slide', default='data/images/')
+parser.add_argument('--input_features', help='Input patche-level features', default='results/patches/')
 parser.add_argument('--output', help='Output', default='results/features/')
 args = parser.parse_args()
 files = args.input_files
 features = args.input_features
-files = glob.glob(files+"*") 
+files = glob.glob(files+"*")
 
 # loop through patients
 for file in files:
@@ -33,7 +33,7 @@ for file in files:
     patches = glob.glob(features+filename+"*")
     #if len(patches) == 0:
     #    continue
-    
+
     file_features = np.zeros(36)
     for patch in patches:
         flag = -1
