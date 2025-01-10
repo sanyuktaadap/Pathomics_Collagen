@@ -2,11 +2,14 @@
 /notes
 /__pycache__
 /data
+/example
 /checkpoints
 /extra
 /plots
 /results
 /logs
+/survival_analysis_results
+/survival_analysis.ipynb
 /dataset.zip
 /scripts/__pycache__
 *.txt
