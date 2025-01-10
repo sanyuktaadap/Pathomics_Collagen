@@ -1,11 +1,12 @@
 /.vscode
 /notes
 /__pycache__
-/dataset
+/data
 /data-split
 /checkpoints
 /extra
 /plots
+/results
 /logs
 /dataset.zip
 /scripts/__pycache__
