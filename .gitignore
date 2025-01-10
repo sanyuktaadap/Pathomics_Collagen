@@ -2,7 +2,6 @@
 /notes
 /__pycache__
 /data
-/data-split
 /checkpoints
 /extra
 /plots
@@ -19,3 +18,5 @@ events.*
 /data
 /results
 /pathomics_collagen
+*.png
+*.jpg
