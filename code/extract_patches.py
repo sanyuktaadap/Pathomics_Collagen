@@ -1,6 +1,4 @@
 """
-Original Author: Can Koyuncu
-Modified By: Arpit Aggarwal
 Description of the file: Script for extracting patches in 40x ensuring empty regions are ignored.
 """
 
@@ -26,9 +24,9 @@ def patch_extraction(wsi_path, output_path, tile_size=3000):
 
     # get filename
     filename = wsi_path.split("/")[-1]
+    print(filename)
     filename = filename.split(".")[0]
     filename = filename.replace(" ", "_")
-    print(filename)
 
     # read entire slide
     mask = slide.read_region((0, 0), 2, slide.level_dimensions[2]).convert("L")
