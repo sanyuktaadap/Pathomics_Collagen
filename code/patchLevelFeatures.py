@@ -34,7 +34,7 @@ mask_folder = args.input_mask
 output_feat_folder = args.output_feature
 
 def extract_patch_level_features(patches_folder, mask_folder, output_feat_folder):
-    patches_files = glob.glob(patches_folder+"*png")#[:100]
+    patches_files = glob.glob(patches_folder+"*png")
 
     for file in patches_files:
         print(file)
@@ -162,11 +162,11 @@ def extract_patch_level_features(patches_folder, mask_folder, output_feat_folder
 
         # file_name = f"{file.split("/")[-1][:-4]}.csv"
         file_name = file.split("/")[-1]
-        file_name = file_name.split(".")[0] + ".csv"
+        file_name = file_name.rsplit('.', 1)[0] + ".csv"
         with open(os.path.join(output_feat_folder, file_name), mode='w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(features)
 
 
-if "__name__" == "__main__":
+if __name__ == "__main__":
     extract_patch_level_features(patches_folder, mask_folder, output_feat_folder)
