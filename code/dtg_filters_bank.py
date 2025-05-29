@@ -32,28 +32,12 @@ def dtg_filters_bank(sigma, configuration=1):
             -x * (1 / (np.sqrt(2) * sigma**3)) * baseKernel,
             (xSquared - sigma**2) * (1 / (np.sqrt(2) * sigma**5)) * baseKernel
         ]
-        
+
         orders = np.array([[0, 0], [1, 0], [0, 1], [2, 0], [1, 1], [0, 2]])
-        
+
         for order in orders:
             DtGkernels.append([dKernel[order[1]], dKernel[order[0]]])
         float_formatter = "{:.4f}".format
         np.set_printoptions(formatter={'float_kind':float_formatter})
-        
-    #     # this is not working because (does not work in the matlab one too)
-    # need to change the indexing where its called 
-        
-    # else:
-    #     size = len(x)
-    #     x, y = np.mgrid[-size//2 + 1:size//2 + 1, -size//2 + 1:size//2 + 1]
-    #     g = np.exp(-((x**2 + y**2)/(2.0*sigma**2)))
-    #     G =  g/g.sum()
 
-        
-    #     # Compute gradients
-    #     Gx, Gy = np.gradient(G)
-    #     Gxx, Gxy = np.gradient(Gx)
-    #     Gyx, Gyy = np.gradient(Gy)
-        
-    #     DtGkernels = [G, Gy, Gx, Gyy, Gxy, Gxx]
     return DtGkernels

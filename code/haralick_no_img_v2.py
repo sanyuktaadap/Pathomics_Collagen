@@ -10,18 +10,19 @@ import numpy as np
 # function
 def haralick_no_img_v2(SGLD):
     # Calculate statistics
+    # Get the indices (pi, pj) of non-zero entries in the SGLD matrix and their values p
     pi, pj = np.nonzero(SGLD)
     p = SGLD[pi, pj]
 
     if len(p) <= 1:
         return None
 
-    # Normalize the co-occurrence matrix and readjust the angles
+    # Normalize the co-occurrence matrix to form a probability distribution and readjust the angles
     p = p / np.sum(p)
     pi -= 1
     pj -= 1
 
-    # Marginals
+    # Marginals (How often each intensity appears at all, regardless of its neighbor)
     px_all = np.sum(SGLD, axis=1)
     pxi = np.nonzero(px_all)
     px = px_all[pxi]
@@ -33,8 +34,9 @@ def haralick_no_img_v2(SGLD):
     py = py_all[pyi]
     py = py / np.sum(py)
     pyi = pyi[0] - 1
-    
+
     # Calculate contrast features
+    # Group similar contrast values and compute associated probabilities.
     all_contrast = np.abs(pi - pj)
     all_contrast[all_contrast > 9] = 18 - all_contrast[all_contrast > 9]
 
@@ -55,6 +57,7 @@ def haralick_no_img_v2(SGLD):
     contrast_entropy = -np.sum(pcontrast * np.log(pcontrast))
 
     # Calculate intensity features
+    # Group and aggregate probabilities over sorted intensities.
     all_intensity = (pi + pj) / 2
     sorted_intensity = np.sort(all_intensity)
     sind = np.argsort(all_intensity)
@@ -78,6 +81,7 @@ def haralick_no_img_v2(SGLD):
     energy = np.sum(p**2)
 
     # Calculate correlation features
+    # Calculate linear correlation between row and column intensities.
     mu_x = np.sum(pxi * px)
     sigma_x = np.sqrt(np.sum((pxi - mu_x)**2 * px))
     mu_y = np.sum(pyi * py)
@@ -93,22 +97,24 @@ def haralick_no_img_v2(SGLD):
     hx = -np.sum(px * np.log(px))
     hy = -np.sum(py * np.log(py))
 
+    # Compute entropic differences and mutual dependencies using marginal distributions.
     information_measure1 = (entropy - h1) / max(hx, hy)
     information_measure2 = np.sqrt(1 - np.exp(-2 * (h2 - entropy)))
 
+    # 13 Haralick Features
     feats = {
-        'contrast_energy': contrast_energy,
-        'contrast_inverse_moment': contrast_inverse_moment,
-        'contrast_ave': contrast_ave,
-        'contrast_var': contrast_var,
-        'contrast_entropy': contrast_entropy,
-        'intensity_ave': intensity_ave,
-        'intensity_variance': intensity_variance,
-        'intensity_entropy': intensity_entropy,
-        'entropy': entropy,
-        'energy': energy,
-        'correlation': correlation,
-        'information_measure1': information_measure1,
-        'information_measure2': information_measure2
+        'contrast_energy': contrast_energy, #Measures overall intensity contrast strength; higher for sharper intensity transitions.
+        'contrast_inverse_moment': contrast_inverse_moment, #Weighs uniformity; higher when neighboring intensities are similar.
+        'contrast_ave': contrast_ave, #Average of contrast values between pixel pairs.
+        'contrast_var': contrast_var, #Variance of contrast values; reflects diversity in local intensity differences.
+        'contrast_entropy': contrast_entropy, #Randomness or disorder in contrast distribution.
+        'intensity_ave': intensity_ave, #Mean of the average intensities between pixel pairs.
+        'intensity_variance': intensity_variance, #Spread of intensity averages; higher means greater texture variability.
+        'intensity_entropy': intensity_entropy, #Unpredictability in average intensity values.
+        'entropy': entropy, #Global randomness or complexity in the texture.
+        'energy': energy, #Sum of squared probabilities; higher for homogeneous textures.
+        'correlation': correlation, #Measures linear dependency between row and column intensities.
+        'information_measure1': information_measure1, #Degree of mutual dependence between pixel pairs based on entropy difference.
+        'information_measure2': information_measure2 #Alternative measure of dependence using exponential entropy differences.
     }
     return feats

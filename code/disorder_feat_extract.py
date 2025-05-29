@@ -12,6 +12,38 @@ from itertools import combinations
 
 # function
 def contrast_entropy(orients, areas, orient_num, orient_cooccur_scheme):
+    """
+    Computes texture features from an orientation co-occurrence matrix.
+
+    Inputs:
+    orients : np.ndarray
+        1D array of integer orientation labels assigned to image regions or patches.
+
+    areas : np.ndarray
+        1D array of region areas corresponding to each orientation label in `orients`.
+
+    orient_num : int
+        The maximum orientation label (e.g., if orientations range from 0 to 8, orient_num = 8).
+
+    orient_cooccur_scheme : int
+        Scheme to compute co-occurrence strength:
+            1 - Area-weighted co-occurrence: Uses product of region areas.
+            2 - Count-based co-occurrence: Uses frequency of orientation pairs.
+
+    Returns:
+    orient_occur_feats : dict
+        Dictionary of Haralick-style texture features computed from the normalized
+        orientation co-occurrence matrix. Includes features like contrast, entropy,
+        correlation, energy, and information measures.
+
+    Notes:
+    - The orientation co-occurrence matrix is symmetric and represents how often
+      orientation pairs co-occur across the image.
+    - For identical orientation pairs (diagonal), the matrix is populated by computing
+      pairwise region interactions (area products or combinations).
+    - Normalized matrix is passed to `haralick_no_img_v2()` for texture feature extraction.
+    """
+
     p_orient_occur = np.zeros((orient_num+1, orient_num+1))
     for pair1 in range(0, orient_num+1):  # Adjusted for Python's 0-indexing
         for pair2 in range(pair1, orient_num+1):  # Adjusted for Python's 0-indexing
