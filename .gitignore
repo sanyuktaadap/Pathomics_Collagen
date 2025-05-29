@@ -24,3 +24,6 @@ events.*
 *.png
 *.jpg
 *.DS_Store
+*.docx
+*.tmp
+*.pdf
