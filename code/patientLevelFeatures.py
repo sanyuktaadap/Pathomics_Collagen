@@ -14,7 +14,7 @@ from tqdm import tqdm
 # read patches and masks
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_files', help='Input slide', default='/mnt/c/Users/sadap/Work/Projects/tma_processing/data/h&e/cores/')
-parser.add_argument('--input_features', help='Input patche-level features', default='results/patches/')
+parser.add_argument('--input_features', help='Input patche-level features', default='results/patch_features/')
 parser.add_argument('--output', help='Output patient level features', default='results/patient_features/')
 args = parser.parse_args()
 

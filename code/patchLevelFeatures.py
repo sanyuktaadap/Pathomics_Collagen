@@ -24,7 +24,7 @@ from extract_feat import extract_collagen_feats
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_patch', help='Patches Folder', default='data/patches/')
 parser.add_argument('--input_mask', help='Masks Folder', default='data/masks/')
-parser.add_argument('--output_feature', help='Output Features Folder', default='results/patches/')
+parser.add_argument('--output_feature', help='Output Features Folder', default='results/patch_features/')
 args = parser.parse_args()
 
 patches_folder = args.input_patch
