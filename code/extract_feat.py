@@ -37,6 +37,8 @@ def extract_collagen_feats(patch,
     # Convert orientation (in degrees) into bins of 10 degrees. Shifted by 9 to make bins non-negative.
     colg_orient_bin = np.fix(colg_orient / 10) + 9
 
+    features = []
+
     # Extract features from local neighborhoods
     for win_size in win_sizes:
         step_size = win_size
@@ -69,4 +71,7 @@ def extract_collagen_feats(patch,
         mean = np.mean(map[:,:,4])
         max = np.max(map[:,:,4])
 
-    return mean, max
+        features.append(mean)
+        features.append(max)
+
+    return features
