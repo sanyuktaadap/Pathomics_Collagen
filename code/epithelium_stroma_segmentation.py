@@ -90,7 +90,7 @@ if __name__ == '__main__':
     output_mask_path = 'data/masks/'
     # output_mask_path = 'data/masks/trial'
     os.makedirs(output_mask_path, exist_ok=True)
-    patch_size = 3000
+    patch_size = 1000
     model_input_size = 750
 
 
@@ -102,6 +102,8 @@ if __name__ == '__main__':
     patches = glob.glob(os.path.join(patches_path, "*"))
     for patch in tqdm(patches):
         filename = patch.split("/")[-1]
+        if os.path.exists(os.path.join(output_mask_path, filename)):
+            continue
         output_mask = get_patch_epithelium_stroma_mask(unet, patch, model_input_size, device)
         save_patch_epithelium_stroma_mask(output_mask, os.path.join(output_mask_path, filename), patch_size)
     print("Epithelium/Stroma Segmentation Done!")
