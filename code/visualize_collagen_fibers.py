@@ -28,7 +28,7 @@ patches_folder = args.input_patch
 mask_folder = args.input_mask
 output_path = args.output_path
 patches_files = glob.glob(os.path.join(patches_folder, "*"))
-model_input_size = 3000
+patch_size = 1000
 
 os.makedirs(output_path, exist_ok=True)
 for file in tqdm(patches_files):
@@ -39,7 +39,7 @@ for file in tqdm(patches_files):
 	# read patch and mask
 	mask = 255 - cv2.imread(os.path.join(mask_folder, file.split("/")[-1]), cv2.IMREAD_GRAYSCALE)
 	patch = cv2.imread(file)
-	patch = cv2.resize(patch, (model_input_size, model_input_size))
+	patch = cv2.resize(patch, (patch_size, patch_size))
 	patch = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)
 
 	# extract collagen fiber mask
