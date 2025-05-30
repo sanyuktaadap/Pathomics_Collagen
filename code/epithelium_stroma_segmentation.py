@@ -31,7 +31,8 @@ def get_patch_epithelium_stroma_mask(model, input_path, model_input_size, device
 
     for index1 in range(0, h, model_input_size):
         for index2 in range(0, w, model_input_size):
-            np_patch_part = np_patch[index1:index1+ model_input_size, index2:index2+ model_input_size]
+            np_patch_part = np_patch[index1:index1 + model_input_size,
+                                     index2:index2 + model_input_size]
             h_part = int(np_patch_part.shape[0])
             w_part = int(np_patch_part.shape[1])
 
@@ -86,9 +87,7 @@ if __name__ == '__main__':
     # parameters
     model_path = "code/unet/epi_seg_unet.pth"
     patches_path = 'data/patches/'
-    # patches_path = 'data/patches/trial'
     output_mask_path = 'data/masks/'
-    # output_mask_path = 'data/masks/trial'
     os.makedirs(output_mask_path, exist_ok=True)
     patch_size = 1000
     model_input_size = 750
@@ -105,5 +104,7 @@ if __name__ == '__main__':
         if os.path.exists(os.path.join(output_mask_path, filename)):
             continue
         output_mask = get_patch_epithelium_stroma_mask(unet, patch, model_input_size, device)
-        save_patch_epithelium_stroma_mask(output_mask, os.path.join(output_mask_path, filename), patch_size)
+        save_patch_epithelium_stroma_mask(output_mask,
+                                          os.path.join(output_mask_path, filename),
+                                          patch_size)
     print("Epithelium/Stroma Segmentation Done!")

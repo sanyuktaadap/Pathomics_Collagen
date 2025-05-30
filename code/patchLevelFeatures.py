@@ -25,14 +25,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--input_patch', help='Patches Folder', default='data/patches/')
 parser.add_argument('--input_mask', help='Masks Folder', default='data/masks/')
 parser.add_argument('--output_feature', help='Output Features Folder', default='results/patch_features/')
+parser.add_argument('--win_sizes', help='Window Sizes to convole over the image', default=[200, 250, 300, 350, 400, 450, 500, 550, 600])
 args = parser.parse_args()
 
 patches_folder = args.input_patch
 mask_folder = args.input_mask
 output_feat_folder = args.output_feature
+win_sizes = args.win_sizes
 
-def extract_patch_level_features(patches_folder, mask_folder, output_feat_folder):
-    patches_files = glob.glob(patches_folder+"*png")
+def extract_patch_level_features(patches_folder, mask_folder, win_sizes, output_feat_folder):
+    patches_files = glob.glob(patches_folder + "*png")
 
     for file in patches_files:
         print(file)
@@ -42,7 +44,8 @@ def extract_patch_level_features(patches_folder, mask_folder, output_feat_folder
         features = []
 
         # read patch and mask
-        mask = 255 - cv2.imread(os.path.join(mask_folder, file.split("/")[-1]), cv2.IMREAD_GRAYSCALE)
+        mask = 255 - cv2.imread(os.path.join(mask_folder, file.split("/")[-1]),
+                                cv2.IMREAD_GRAYSCALE)
         patch = cv2.imread(file)
         patch = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)
 
@@ -52,17 +55,16 @@ def extract_patch_level_features(patches_folder, mask_folder, output_feat_folder
         bifs, _ = compute_bifs(patch, 3, 0.015, 1.5)
         collagen_mask = bifs == 5
         collagen_mask = np.logical_and(collagen_mask, mask)
-        collagen_mask = morphology.remove_small_objects(collagen_mask.astype(bool), min_size=frag_thresh)
-
-        # collagen centroid and orientation information extraction
-        win_sizes = [200, 250, 300, 350, 400, 450, 500, 550, 600]
+        collagen_mask = morphology.remove_small_objects(collagen_mask.astype(bool),
+                                                        min_size=frag_thresh)
 
         stroma_features = extract_collagen_feats(patch, collagen_mask, win_sizes)
         features.extend(stroma_features)
 
         # SECOND SET OF FEATURES FROM PERITUMORAL AREAS
         # get dilated mask
-        im_dilated = cv2.imread(os.path.join(mask_folder, file.split("/")[-1]), cv2.IMREAD_GRAYSCALE)
+        im_dilated = cv2.imread(os.path.join(mask_folder, file.split("/")[-1]),
+                                cv2.IMREAD_GRAYSCALE)
         for index1 in range(0, 50):
             im_dilated = cv2.dilate(im_dilated, np.ones((5, 5), np.uint8), iterations=1)
         im_new = im_dilated
@@ -75,7 +77,8 @@ def extract_patch_level_features(patches_folder, mask_folder, output_feat_folder
         collagen_mask = bifs == 5
         collagen_mask = np.logical_and(collagen_mask, im_new)
         collagen_mask = np.logical_and(collagen_mask, 255-im_dilated)
-        collagen_mask = morphology.remove_small_objects(collagen_mask.astype(bool), min_size=frag_thresh)
+        collagen_mask = morphology.remove_small_objects(collagen_mask.astype(bool),
+                                                        min_size=frag_thresh)
 
         # collagen centroid and orientation information extraction
         peri_tumor_feats = extract_collagen_feats(patch, collagen_mask, win_sizes)

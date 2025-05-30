@@ -21,7 +21,9 @@ def extract_collagen_feats(patch,
     collagen_mask = collagen_mask.astype(np.uint16)
     collagen_mask_np_u8 = collagen_mask.copy().astype(np.uint8)
     # contours: a list of shapes/objects (boundaries of collagen blobs).
-    contours, _ = cv2.findContours(collagen_mask_np_u8, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(collagen_mask_np_u8,
+                                   cv2.RETR_TREE,
+                                   cv2.CHAIN_APPROX_SIMPLE)
 
     # Draw (fill) each contour with a unique label into the original collagen_mask
     for i, contour in enumerate(contours):
@@ -30,11 +32,13 @@ def extract_collagen_feats(patch,
     # Extract geometric properties from each collagen region: center, angle and size
     properties = ('centroid', 'orientation', 'area')
     collogen_props = measure.regionprops_table(collagen_mask, properties=properties)
-    colg_center = np.array([collogen_props['centroid-0'], collogen_props['centroid-1']]).T
+    colg_center = np.array([collogen_props['centroid-0'],
+                            collogen_props['centroid-1']]).T
     colg_area = collogen_props['area']
     colg_orient = collogen_props['orientation']
     colg_orient = np.array([math.degrees(orient) for orient in colg_orient])
-    # Convert orientation (in degrees) into bins of 10 degrees. Shifted by 9 to make bins non-negative.
+    # Convert orientation (in degrees) into bins of 10 degrees.
+    # Shifted by 9 to make bins non-negative.
     colg_orient_bin = np.fix(colg_orient / 10) + 9
 
     features = []
@@ -67,6 +71,7 @@ def extract_collagen_feats(patch,
                                                                 1)
                     if orient_occur_feats is not None:
                         map[win_y // step_size, win_x // step_size, :] = np.array(list(orient_occur_feats.values()))
+
         # Mean and Max of the feature at index 4 (5th haralick feature: contrast_entropy) of the map
         mean = np.mean(map[:,:,4])
         max = np.max(map[:,:,4])

@@ -87,13 +87,17 @@ def haralick_no_img_v2(SGLD):
     mu_y = np.sum(pyi * py)
     sigma_y = np.sqrt(np.sum((pyi - mu_y)**2 * py))
 
-    correlation = np.sum((pi - mu_x) * (pj - mu_y) * p) / (sigma_x * sigma_y) if sigma_x != 0 and sigma_y != 0 else 0
+    if sigma_x != 0 and sigma_y != 0:
+        correlation = np.sum((pi - mu_x) * (pj - mu_y) * p) / (sigma_x * sigma_y)
+    else:
+        correlation = 0
 
     px_grid, py_grid = np.meshgrid(px, py)
     log_px_grid, log_py_grid = np.meshgrid(np.log(px), np.log(py))
 
     h1 = -np.sum(p * np.log(np.where(px_all[pj] * py_all[pi] != 0, px_all[pj] * py_all[pi], 1)))
-    h2 = -np.sum(px_grid.flatten() * py_grid.flatten() * (log_px_grid.flatten() + log_py_grid.flatten()))
+    h2 = -np.sum(px_grid.flatten() * py_grid.flatten() * (log_px_grid.flatten() + \
+                 log_py_grid.flatten()))
     hx = -np.sum(px * np.log(px))
     hy = -np.sum(py * np.log(py))
 

@@ -16,6 +16,7 @@ parser.add_argument('--patches_folder', help='Folder path to save extracted patc
 parser.add_argument('--patch_tile_size', help='Tile size for extracted patches', default=3000)
 parser.add_argument('--patch_mask_folder', help='Folder path to save epithelium/storma segmentation masks', default='data/masks/')
 parser.add_argument('--model_path', help='Path to segmentation model (.pth file)', default='code/unet/epi_seg_unet.pth')
+parser.add_argument('--win_sizes', help='Window Sizes to convole over the image', default=[200, 250, 300, 350, 400, 450, 500, 550, 600])
 parser.add_argument('--out_patch_feat_folder', help='Folder path to save output patch level features', default='results/patch_features')
 parser.add_argument('--out_patient_feat_folder', help='Folder path to save output patient level features', default='results/patient_features')
 args = parser.parse_args()
@@ -60,6 +61,7 @@ if __name__ == "__main__":
     extract_patch_level_features(
         patches_folder=args.patches_folder,
         mask_folder=args.patch_mask_folder,
+        win_sizes=args.win_sizes,
         output_feat_folder=args.out_patch_feat_folder
     )
 

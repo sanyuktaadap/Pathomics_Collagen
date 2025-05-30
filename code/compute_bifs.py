@@ -24,7 +24,8 @@ def compute_bifs(im, sigma, epsilon, configuration=1):
 
     Returns:
     - bifs: Image where each pixel is labeled with one of 7 basic image features.
-    - jet: 6-channel array of derivative responses at each pixel. It captures how the intensity is changing in the neighborhood around that pixel.
+    - jet: 6-channel array of derivative responses at each pixel.
+           It captures how the intensity is changing in the neighborhood around that pixel.
     """
 
     # Ensure the input is a NumPy array
@@ -51,7 +52,9 @@ def compute_bifs(im, sigma, epsilon, configuration=1):
     # Apply each DtG filter to the image and store result in jet
     for i, order in enumerate(orders):
         # Apply separable filters and scale response based on sigma
-        jet[i, :, :] = efficient_convolution(im, DtGfilters[i,0,:],DtGfilters[i,1,:]) * (sigma ** (sum(order)))
+        jet[i, :, :] = efficient_convolution(im,
+                                             DtGfilters[i, 0, :],
+                                             DtGfilters[i, 1, :]) * (sigma ** (sum(order)))
     jet = np.array(jet)
 
     # Compute λ and μ values from second-order derivatives
