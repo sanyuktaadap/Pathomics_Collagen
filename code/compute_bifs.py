@@ -58,10 +58,10 @@ def compute_bifs(im, sigma, epsilon, configuration=1):
     jet = np.array(jet)
 
     # Compute λ and μ values from second-order derivatives
-    if configuration == 1:
+    if configuration == 1: # faster, simpler, good for general use.
         lambda_val = (jet[3] + jet[5])
         mu = np.sqrt(((jet[3] - jet[5]) ** 2) + (4 * jet[4] ** 2))
-    else:
+    else: # more accurate, interpretable, better for curvature-sensitive tasks.
         lambda_val = 0.5 * (jet[3] + jet[5])
         mu = np.sqrt(0.25 * ((jet[3] - jet[5]) ** 2) + jet[4] ** 2)
 
