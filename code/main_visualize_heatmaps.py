@@ -16,15 +16,15 @@ import argparse
 # MAIN CODE
 
 # Parameters for analysis
-win_sizes = [600]  # List of window sizes for feature extraction
+win_sizes = [100, 125, 150, 175, 200]  # List of window sizes for feature extraction
 filter_scale = 3   # Filter scale for BIFS computation
 feature_descriptor = 5  # Descriptor to identify collagen features
 orient_num = 180 // 10  # Number of orientation bins
 
 # Parse command-line arguments to specify input/output paths
 parser = argparse.ArgumentParser()
-parser.add_argument('--input_patch', help='Input patches', default='data/patches_for_visualization/')
-parser.add_argument('--input_mask', help='Input masks', default='data/masks_for_visualization/')
+parser.add_argument('--input_patch', help='Input patches', default='data/patches/')
+parser.add_argument('--input_mask', help='Input masks', default='data/masks/')
 parser.add_argument('--output_heatmaps_stroma_win', help='Output heatmaps for stromal areas', default='results/heatmaps_stroma/')
 parser.add_argument('--output_heatmaps_peritumoral_win', help='Output heatmaps for peritumoral areas', default='results/heatmaps_peritumoral/')
 args = parser.parse_args()
@@ -99,13 +99,12 @@ for file in patches_files:
                         map[win_y // step_size, win_x // step_size, :] = np.array(list(orient_occur_feats.values()))
 
         # Save heatmaps for stromal areas
-        if win_size == 600:
-            heatmap_normalized = cv2.normalize(map[:, :, 4].T, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-            heatmap_uint8 = np.uint8(heatmap_normalized)
-            heatmap_colormap = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
-            heatmap_colormap = cv2.resize(heatmap_colormap, (int(patch.shape[0]), int(patch.shape[1])))
-            overlayed_image = cv2.addWeighted(patch, 0.2, heatmap_colormap, 0.8, 0)
-            cv2.imwrite(args.output_heatmaps_stroma_win + file.split("/")[-1][:-4] + ".png", overlayed_image)
+        heatmap_normalized = cv2.normalize(map[:, :, 4].T, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+        heatmap_uint8 = np.uint8(heatmap_normalized)
+        heatmap_colormap = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
+        heatmap_colormap = cv2.resize(heatmap_colormap, (int(patch.shape[0]), int(patch.shape[1])))
+        overlayed_image = cv2.addWeighted(patch, 0.2, heatmap_colormap, 0.8, 0)
+        cv2.imwrite(args.output_heatmaps_stroma_win + file.split("/")[-1][:-4] + f"_stroma_{win_size}.png", overlayed_image)
 
     # SECOND SET OF FEATURES: Extract features from peritumoral areas
 
@@ -144,7 +143,9 @@ for file in patches_files:
     # Extract features within sliding windows for peritumoral areas
     for win_size in win_sizes:
         step_size = win_size
-        map = np.zeros((int((patch.shape[0] - win_size) / step_size) + 1, int((patch.shape[1] - win_size) / step_size) + 1, 13))
+        map = np.zeros((int((patch.shape[0] - win_size) / step_size) + 1,
+                        int((patch.shape[1] - win_size) / step_size) + 1,
+                        13))
         height, width = collagen_mask.shape
 
         for win_x in range(0, width - win_size + 1, step_size):
@@ -167,10 +168,9 @@ for file in patches_files:
                         map[win_y // step_size, win_x // step_size, :] = np.array(list(orient_occur_feats.values()))
 
         # Save heatmaps for peritumoral areas
-        if win_size == 600:
-            heatmap_normalized = cv2.normalize(map[:, :, 4].T, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-            heatmap_uint8 = np.uint8(heatmap_normalized)
-            heatmap_colormap = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
-            heatmap_colormap = cv2.resize(heatmap_colormap, (int(patch.shape[0]), int(patch.shape[1])))
-            overlayed_image = cv2.addWeighted(patch, 0.2, heatmap_colormap, 0.8, 0)
-            cv2.imwrite(args.output_heatmaps_peritumoral_win + file.split("/")[-1][:-4] + ".png", overlayed_image)
+        heatmap_normalized = cv2.normalize(map[:, :, 4].T, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+        heatmap_uint8 = np.uint8(heatmap_normalized)
+        heatmap_colormap = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
+        heatmap_colormap = cv2.resize(heatmap_colormap, (int(patch.shape[0]), int(patch.shape[1])))
+        overlayed_image = cv2.addWeighted(patch, 0.2, heatmap_colormap, 0.8, 0)
+        cv2.imwrite(args.output_heatmaps_peritumoral_win + file.split("/")[-1][:-4] + f"_peritumoral_{win_size}.png", overlayed_image)
