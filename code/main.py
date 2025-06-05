@@ -13,7 +13,7 @@ from tqdm import tqdm
 parser = argparse.ArgumentParser()
 parser.add_argument('--slides_folder', help='folder containing WSIs', default='data/images/')
 parser.add_argument('--patches_folder', help='Folder path to save extracted patches', default='data/patches/')
-parser.add_argument('--patch_tile_size', help='Tile size for extracted patches', default=3000)
+parser.add_argument('--patch_tile_size', help='Tile size for extracted patches', default=1000)
 parser.add_argument('--patch_mask_folder', help='Folder path to save epithelium/storma segmentation masks', default='data/masks/')
 parser.add_argument('--model_path', help='Path to segmentation model (.pth file)', default='code/unet/epi_seg_unet.pth')
 parser.add_argument('--win_sizes', help='Window Sizes to convole over the image', default=[200, 250, 300, 350, 400, 450, 500, 550, 600])
