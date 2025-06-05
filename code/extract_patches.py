@@ -12,7 +12,7 @@ import numpy as np
 from tqdm import tqdm
 
 
-def patch_extraction(image_path, output_path, tile_size=3000):
+def patch_extraction(image_path, output_path, tile_size=1000):
     filename = os.path.basename(image_path).split('.png')[0].replace(" ", "_")
 
     if image_path.lower().endswith(".png"):
