@@ -27,3 +27,6 @@ events.*
 *.docx
 *.tmp
 *.pdf
+debug*
+*.pptx
+*.md
