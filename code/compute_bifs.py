@@ -44,7 +44,7 @@ def compute_bifs(im, sigma, epsilon, configuration=1):
     jet = np.zeros((6, im.shape[0], im.shape[1]), dtype=np.float64)
 
     # Generate Derivative of Gaussian (DtG) filters for the given sigma
-    DtGfilters = dtg_filters_bank(sigma);
+    DtGfilters = dtg_filters_bank(sigma)
     DtGfilters = np.array(DtGfilters)
 
     # Apply each DtG filter to the image and store result in jet
