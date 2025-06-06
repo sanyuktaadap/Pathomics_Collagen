@@ -39,13 +39,18 @@ for file in patches_files:
     print(file)
 
     # Skip files without a corresponding mask
-    if not os.path.isfile(mask_folder + file.split("/")[-1]):
+    mask_path = mask_folder + file.split("/")[-1]
+    if not os.path.isfile(mask_path):
         continue
 
     features = []
 
+    filename = file.split("/")[-1]
+    if filename not in lis:
+        continue
+
     # Read the patch and its corresponding mask
-    mask = 255 - cv2.imread(mask_folder + file.split("/")[-1], cv2.IMREAD_GRAYSCALE)  # Invert the mask
+    mask = 255 - cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)  # Invert the mask
     patch = cv2.imread(file)
     patch = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)  # Convert to RGB
 
@@ -109,7 +114,7 @@ for file in patches_files:
     # SECOND SET OF FEATURES: Extract features from peritumoral areas
 
     # Dilate the mask to define peritumoral regions
-    im_dilated = cv2.imread(mask_folder + file.split("/")[-1], cv2.IMREAD_GRAYSCALE)
+    im_dilated = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
     for _ in range(50):
         im_dilated = cv2.dilate(im_dilated, np.ones((5, 5), np.uint8), iterations=1)
     im_new = im_dilated

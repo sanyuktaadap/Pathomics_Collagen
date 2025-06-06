@@ -1,12 +1,10 @@
 """
-Authors: Arpit Aggarwal, Himanshu Maurya, Haojia Li
 File: Dependency file for extracting collagen features (standard file, no changes needed!)
 """
 
 # header files to load
 import numpy as np
 import cv2
-from scipy.ndimage import gaussian_filter
 from dtg_filters_bank import dtg_filters_bank
 from efficient_convolution import efficient_convolution
 

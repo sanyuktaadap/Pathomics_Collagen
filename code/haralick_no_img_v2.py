@@ -1,5 +1,4 @@
 """
-Authors: Arpit Aggarwal, Himanshu Maurya, Haojia Li
 File: Dependency file for extracting collagen features (standard file, no changes needed!)
 """
 

@@ -1,23 +1,21 @@
 """
-Authors: Arpit Aggarwal, Himanshu Maurya, Haojia Li
 File: Dependency file for extracting collagen features (standard file, no changes needed!)
 """
 
 # header files to load
 from scipy.ndimage import convolve
-import numpy as np
 
 
 # function
 def efficient_convolution(I, kx, ky):
     """
     Convolution of an image using two separable 1-D kernels.
-    
+
     Parameters:
     I (numpy.ndarray): Input image.
     kx (numpy.ndarray): Kernel to be applied on the horizontal axis.
     ky (numpy.ndarray): Kernel to be applied on the vertical axis.
-    
+
     Returns:
     numpy.ndarray: The convolved image.
     """

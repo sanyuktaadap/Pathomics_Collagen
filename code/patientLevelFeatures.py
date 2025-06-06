@@ -11,13 +11,6 @@ import csv
 from tqdm import tqdm
 
 # MAIN CODE
-# read patches and masks
-parser = argparse.ArgumentParser()
-parser.add_argument('--input_files', help='Input slide', default='/mnt/c/Users/sadap/Work/Projects/tma_processing/data/h&e/cores/')
-parser.add_argument('--input_features', help='Input patche-level features', default='results/patch_features/')
-parser.add_argument('--output', help='Output patient level features', default='results/patient_features/')
-args = parser.parse_args()
-
 def extract_patient_level_features(slides, patch_features):
     # Iterate over each slide in the list
     for slide in tqdm(slides):
@@ -63,6 +56,12 @@ def extract_patient_level_features(slides, patch_features):
             writer.writerow(file_features)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input_files', help='Input slide', default='/mnt/c/Users/sadap/Work/Projects/tma_processing/data/h&e/cores/')
+    parser.add_argument('--input_features', help='Input patche-level features', default='results/patch_features/')
+    parser.add_argument('--output', help='Output patient level features', default='results/patient_features/')
+    args = parser.parse_args()
+
     slides = args.input_files
     slides = glob.glob(slides+"*")
     patch_features = args.input_features

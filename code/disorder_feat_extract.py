@@ -1,5 +1,4 @@
 """
-Authors: Arpit Aggarwal, Himanshu Maurya, Haojia Li
 File: Dependency file for extracting collagen features (standard file, no changes needed!)
 """
 
@@ -14,6 +13,7 @@ from itertools import combinations
 def contrast_entropy(orients, areas, orient_num, orient_cooccur_scheme):
     """
     Computes texture features from an orientation co-occurrence matrix.
+    It is symmetric and represents how often orientation pairs co-occur across the image.
 
     Inputs:
     orients : np.ndarray
@@ -33,20 +33,12 @@ def contrast_entropy(orients, areas, orient_num, orient_cooccur_scheme):
     Returns:
     orient_occur_feats : dict
         Dictionary of Haralick-style texture features computed from the normalized
-        orientation co-occurrence matrix. Includes features like contrast, entropy,
-        correlation, energy, and information measures.
-
-    Notes:
-    - The orientation co-occurrence matrix is symmetric and represents how often
-      orientation pairs co-occur across the image.
-    - For identical orientation pairs (diagonal), the matrix is populated by computing
-      pairwise region interactions (area products or combinations).
-    - Normalized matrix is passed to `haralick_no_img_v2()` for texture feature extraction.
+        orientation co-occurrence matrix.
     """
 
     p_orient_occur = np.zeros((orient_num+1, orient_num+1))
-    for pair1 in range(0, orient_num+1):  # Adjusted for Python's 0-indexing
-        for pair2 in range(pair1, orient_num+1):  # Adjusted for Python's 0-indexing
+    for pair1 in range(0, orient_num+1):
+        for pair2 in range(pair1, orient_num+1):
             if np.any(orients == pair1) and np.any(orients == pair2):
                 if pair1 != pair2:
                     if orient_cooccur_scheme == 1:

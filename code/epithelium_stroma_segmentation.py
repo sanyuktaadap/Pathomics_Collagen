@@ -1,7 +1,5 @@
 """
-Original Author: Cheng Lu
-Modified By: Arpit Aggarwal
-Description of the file: Epi/Stroma segmentation. Updated script for my use case.
+Description of the file: Epi/Stroma segmentation.
 """
 
 
@@ -91,7 +89,6 @@ if __name__ == '__main__':
     os.makedirs(output_mask_path, exist_ok=True)
     patch_size = 1000
     model_input_size = 750
-
 
     # load model
     device = torch.device(f'cuda' if torch.cuda.is_available() else 'cpu')
