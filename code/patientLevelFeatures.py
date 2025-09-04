@@ -11,7 +11,7 @@ import csv
 from tqdm import tqdm
 
 # MAIN CODE
-def extract_patient_level_features(slides, patch_features):
+def extract_patient_level_features(slides, patch_features, output):
     # Iterate over each slide in the list
     for slide in tqdm(slides):
         # Extract the slide filename (without path or extension)
@@ -23,7 +23,7 @@ def extract_patient_level_features(slides, patch_features):
         patch_feats = glob.glob(os.path.join(patch_features, filename + "*"))
 
         # Initialize a zero vector to hold aggregated slide-level features
-        file_features = np.zeros(36)
+        file_features = np.zeros(44)
 
         # Iterate over each patch feature file for the current slide
         for feat in patch_feats:
@@ -50,7 +50,7 @@ def extract_patient_level_features(slides, patch_features):
             file_features[index] = file_features[index] / len(patch_feats)
 
         # Save the final patient-level features to a CSV file
-        output_file = os.path.join(args.output, filename + ".csv")
+        output_file = os.path.join(output, filename + ".csv")
         with open(output_file, mode='w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(file_features)
@@ -65,5 +65,6 @@ if __name__ == "__main__":
     slides = args.input_files
     slides = glob.glob(slides+"*")
     patch_features = args.input_features
+    output = args.output
     os.makedirs(args.output, exist_ok=True)
-    extract_patient_level_features(slides, patch_features)
+    extract_patient_level_features(slides, patch_features, output)
