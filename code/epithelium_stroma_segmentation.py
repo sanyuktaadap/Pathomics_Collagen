@@ -78,16 +78,26 @@ def save_patch_epithelium_stroma_mask(mask, output_path, patch_size):
     #    final_mask = cv2.dilate(output_mask.copy(), None, iterations=index+1)
     mask = Image.fromarray(output_mask).resize((patch_size, patch_size), Image.BICUBIC)
     mask.save(output_path)
+    output_path = output_path.split("/")[-1]
+    # cv2.imwrite(f"test_results/{output_path}_org.png", image)
+    # cv2.imwrite(f"test_results/{output_path}_inv.png", image_inv)
+    # cv2.imwrite(f"test_results/{output_path}_cleaned.png", output_mask)
 
 # run code
 if __name__ == '__main__':
-
-    # parameters
-    model_path = "code/unet/epi_seg_unet.pth"
-    patches_path = 'data/patches/'
-    output_mask_path = 'data/masks/'
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cohort', help='Cohort name', default='Black_cohort')
+    parser.add_argument('--model_path', help='Path to saved model', default='code/unet/epi_seg_unet.pth')
+    parser.add_argument('--patches_path', help='Path to patches', default='data/hari_BC/patches/Black_cohort')
+    parser.add_argument('--output_mask_path', help='Path to output masks', default='data/hari_BC/masks/Black_cohort')
+    args = parser.parse_args()
+    cohort = args.cohort
+    model_path = args.model_path
+    patches_path = args.patches_path
+    output_mask_path = args.output_mask_path
     os.makedirs(output_mask_path, exist_ok=True)
-    patch_size = 1000
+    patch_size = 3000
     model_input_size = 750
 
     # load model
@@ -100,8 +110,9 @@ if __name__ == '__main__':
         filename = patch.split("/")[-1]
         if os.path.exists(os.path.join(output_mask_path, filename)):
             continue
+        print(f"Processing {filename}")
         output_mask = get_patch_epithelium_stroma_mask(unet, patch, model_input_size, device)
         save_patch_epithelium_stroma_mask(output_mask,
-                                          os.path.join(output_mask_path, filename),
-                                          patch_size)
+                                        os.path.join(output_mask_path, filename),
+                                        patch_size)
     print("Epithelium/Stroma Segmentation Done!")
