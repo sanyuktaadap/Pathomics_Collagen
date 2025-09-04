@@ -25,13 +25,16 @@ def patch_extraction(image_path, output_path, tile_size=1000):
             for j in range(0, height, tile_size):
                 if i + tile_size > width or j + tile_size > height:
                     continue
+                patch_name = f"{filename}_{i}_{j}.png"
+                if os.path.exists(os.path.join(output_path, patch_name)):
+                    continue
                 box = (i, j, i + tile_size, j + tile_size)
                 tile = image.crop(box)
                 tile_mask = gray_image.crop(box)
                 fn = lambda x: 0 if x > 220 or x < 50 else 1
                 bin_mask = tile_mask.point(fn, mode='1')
                 if ImageStat.Stat(bin_mask).mean[0] > 0.3:
-                    patch_name = f"{filename}_{i}_{j}.png"
+                    # patch_name = f"{filename}_{i}_{j}.png"
                     tile.save(os.path.join(output_path, patch_name))
 
     else:
@@ -64,11 +67,22 @@ def patch_extraction(image_path, output_path, tile_size=1000):
                     tile.save(os.path.join(output_path, patch_name))
 
 # extract patches
-input_path = "/mnt/c/Users/sadap/Work/Projects/tma_processing/data/h&e/cores/"
-output_path = "data/patches/"
-print(input_path)
-os.makedirs(output_path, exist_ok=True)
-files = glob.glob(input_path + "*")
-for file in tqdm(files):
-    print(file)
-    patch_extraction(image_path=file, output_path=output_path, tile_size=1000)
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cohort', help='Cohort name', default='White_cohort')
+    parser.add_argument('--input_path', help='Input path to WSI or images', default='data/hari_BC/White_cohort/')
+    parser.add_argument('--output_path', help='Output path to patches', default='data/hari_BC/patches/White_cohort')
+    args = parser.parse_args()
+    cohort = args.cohort
+    input_path = args.input_path
+    output_path = args.output_path
+
+    print(input_path)
+
+    os.makedirs(output_path, exist_ok=True)
+    files = glob.glob(input_path + "*")
+
+    for file in tqdm(files):
+        print(file)
+        patch_extraction(image_path=file, output_path=output_path, tile_size=3000)
