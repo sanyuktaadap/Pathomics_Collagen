@@ -28,7 +28,7 @@ patches_folder = args.input_patch
 mask_folder = args.input_mask
 output_path = args.output_path
 patches_files = glob.glob(os.path.join(patches_folder, "*"))
-patch_size = 1000
+patch_size = 3000
 
 os.makedirs(output_path, exist_ok=True)
 for file in tqdm(patches_files):
