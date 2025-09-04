@@ -17,7 +17,6 @@ def extract_patch_level_features(patches_folder, mask_folder, win_sizes, output_
     patches_files = glob.glob(patches_folder + "*png")
     for file in patches_files:
         file_name = file.split("/")[-1]
-        name = file_name.rsplit('.', 1)[0]
         print(file_name)
 
         if os.path.isfile(os.path.join(mask_folder, file_name)) == 0:
@@ -87,12 +86,14 @@ if __name__ == "__main__":
     parser.add_argument('--input_patch', help='Patches Folder', default='data/patches/')
     parser.add_argument('--input_mask', help='Masks Folder', default='data/masks/')
     parser.add_argument('--output_feature', help='Output Features Folder', default='results/patch_features/')
-    parser.add_argument('--win_sizes', help='Window Sizes to convole over the image', default=[200, 250, 300, 350, 400, 450, 500, 550, 600])
+    parser.add_argument('--win_sizes', help='Window Sizes to convole over the image', default=[100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600])
     args = parser.parse_args()
 
     patches_folder = args.input_patch
     mask_folder = args.input_mask
     output_feat_folder = args.output_feature
     win_sizes = args.win_sizes
+
+    os.makedirs(output_feat_folder, exist_ok=True)
 
     extract_patch_level_features(patches_folder, mask_folder, win_sizes, output_feat_folder)
