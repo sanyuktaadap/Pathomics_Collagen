@@ -12,14 +12,18 @@ import glob
 import argparse
 import csv
 from extract_feat import extract_collagen_feats
+from tqdm import tqdm
 
-def extract_patch_level_features(patches_folder, mask_folder, win_sizes, output_feat_folder):
-    patches_files = glob.glob(patches_folder + "*png")
-    for file in patches_files:
+def extract_patch_level_features(patches_folder, epi_mask_folder, fat_mask_folder, win_sizes, output_feat_folder):
+    filter_scale = 3
+    feat = 5
+    patches_files = glob.glob(os.path.join(patches_folder, "*png"))
+    print(f"patches_folder: {patches_folder}")
+
+    for file in tqdm(patches_files):
         file_name = file.split("/")[-1]
-        print(file_name)
 
-        if os.path.isfile(os.path.join(mask_folder, file_name)) == 0:
+        if not os.path.isfile(os.path.join(epi_mask_folder, file_name)) or not os.path.isfile(os.path.join(fat_mask_folder, file_name)):
             continue
 
         features = []
@@ -28,17 +32,21 @@ def extract_patch_level_features(patches_folder, mask_folder, win_sizes, output_
         patch = cv2.imread(file)
         patch = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)
 
-        mask = cv2.imread(os.path.join(mask_folder, file_name),
+        epi_mask = cv2.imread(os.path.join(epi_mask_folder, file_name),
                             cv2.IMREAD_GRAYSCALE)
-        mask = 255 - mask
+        epi_mask = 255 - epi_mask
+
+        fat_mask = cv2.imread(os.path.join(fat_mask_folder, file_name),
+                              cv2.IMREAD_GRAYSCALE)
+        fat_mask = 255 - fat_mask
 
         # FIRST SET OF FEATURES FROM ENTIRE STROMAL AREAS
         # extract collagen fiber mask
-        frag_thresh = 3 * 10
-        bifs, _ = compute_bifs(patch, 3, 0.015, 1.5)
-        feat = 5
+        frag_thresh = filter_scale * 10
+        bifs, _ = compute_bifs(patch, filter_scale, 0.015, 1.5)
         collagen_mask = bifs == feat
-        collagen_mask = np.logical_and(collagen_mask, mask)
+        collagen_mask = np.logical_and(collagen_mask, epi_mask)
+        collagen_mask = np.logical_and(collagen_mask, fat_mask)
         collagen_mask = morphology.remove_small_objects(collagen_mask.astype(bool),
                                                         min_size=frag_thresh)
 
@@ -47,7 +55,7 @@ def extract_patch_level_features(patches_folder, mask_folder, win_sizes, output_
 
         # SECOND SET OF FEATURES FROM PERITUMORAL AREAS
         # get dilated mask
-        im_dilated = cv2.imread(os.path.join(mask_folder, file_name),
+        im_dilated = cv2.imread(os.path.join(epi_mask_folder, file_name),
                                 cv2.IMREAD_GRAYSCALE)
         for index1 in range(0, 15):
             im_dilated = cv2.dilate(im_dilated, np.ones((5, 5), np.uint8), iterations=1)
@@ -56,11 +64,13 @@ def extract_patch_level_features(patches_folder, mask_folder, win_sizes, output_
             im_new = cv2.dilate(im_new, np.ones((5, 5), np.uint8), iterations=1)
 
         # extract collagen fiber mask
-        frag_thresh = 3 * 10
-        bifs, _ = compute_bifs(patch, 3, 0.015, 1.5)
+        frag_thresh = filter_scale * 10
+        bifs, _ = compute_bifs(patch, filter_scale, 0.015, 1.5)
         collagen_mask = bifs == 5
         collagen_mask = np.logical_and(collagen_mask, im_new)
-        collagen_mask = np.logical_and(collagen_mask, 255-im_dilated)
+        collagen_mask = np.logical_and(collagen_mask, 255 - im_dilated)
+        collagen_mask = np.logical_and(collagen_mask, epi_mask)  # Exclude epithelial regions
+        collagen_mask = np.logical_and(collagen_mask, fat_mask)  # Exclude fat regions
         collagen_mask = morphology.remove_small_objects(collagen_mask.astype(bool),
                                                         min_size=frag_thresh)
 
@@ -84,16 +94,22 @@ if __name__ == "__main__":
     # read patches and masks
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_patch', help='Patches Folder', default='data/patches/')
-    parser.add_argument('--input_mask', help='Masks Folder', default='data/masks/')
+    parser.add_argument('--epi_mask', help='Masks Folder', default='data/masks/')
+    parser.add_argument('--fat_mask', help='Fat Masks Folder', default='data/fat_masks/')
     parser.add_argument('--output_feature', help='Output Features Folder', default='results/patch_features/')
-    parser.add_argument('--win_sizes', help='Window Sizes to convole over the image', default=[100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600])
+    parser.add_argument('--win_sizes', help='Window Sizes to convole over the image', default=[65,70,75])
     args = parser.parse_args()
 
     patches_folder = args.input_patch
-    mask_folder = args.input_mask
+    epi_mask_folder = args.epi_mask
+    fat_mask_folder = args.fat_mask
     output_feat_folder = args.output_feature
     win_sizes = args.win_sizes
 
-    os.makedirs(output_feat_folder, exist_ok=True)
-
-    extract_patch_level_features(patches_folder, mask_folder, win_sizes, output_feat_folder)
+    cohorts = os.listdir(patches_folder)
+    for cohort in cohorts:
+        cohort_patch_fold = os.path.join(patches_folder, cohort)
+        cohort_epi_mask_fold = os.path.join(epi_mask_folder, cohort)
+        cohort_fat_mask_fold = os.path.join(fat_mask_folder, cohort)
+        os.makedirs(os.path.join(output_feat_folder, cohort), exist_ok=True)
+        extract_patch_level_features(cohort_patch_fold, cohort_epi_mask_fold, cohort_fat_mask_fold, win_sizes, os.path.join(output_feat_folder, cohort))
