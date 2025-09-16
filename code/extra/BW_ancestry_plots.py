@@ -15,8 +15,8 @@ df_white = {"donor": [],
             "Peritumoral_Mean": [],
             "Peritumoral_Max": []}
 
-process_list = pd.read_csv("data/hari_BC/BnW_combined.csv")
-
+process_list = pd.read_csv("data/hari_BC/csv/BnW_combined.csv")
+num_feats = 12
 donor_col = 2
 year_col = 4
 new_name_col = 5
@@ -41,32 +41,32 @@ for i in range(0, len(process_list), 2):
     cohort = process_list.iloc[i, cohort_col]
 
     # Load the CSVs (no headers)
-    csv_1 = pd.read_csv(f'data/hari_BC/patient_feats/{cohort}_cohort/{p1}_H&E_Breast_XXXXXXXX.csv', header=None)
-    csv_2 = pd.read_csv(f'data/hari_BC/patient_feats/{cohort}_cohort/{p2}_H&E_Breast_XXXXXXXX.csv', header=None)
+    csv_1 = pd.read_csv(f'data/hari_BC/otsu/otsu_patient_feats2/{cohort}_cohort/{p1}_H&E_Breast_XXXXXXXX.csv', header=None)
+    csv_2 = pd.read_csv(f'data/hari_BC/otsu/otsu_patient_feats2/{cohort}_cohort/{p2}_H&E_Breast_XXXXXXXX.csv', header=None)
 
     # Extract values as 1D arrays
     data1 = csv_1.values.flatten()
     data2 = csv_2.values.flatten()
 
     # Select only even indices (0, 2, ..., 42) - Means
-    even_indices = list(range(0, 44, 2))
+    even_indices = list(range(0, num_feats, 2))
     data1_even = data1[even_indices]
     data2_even = data2[even_indices]
 
     # Select only odd indices (1, 3, ..., 43) - Max
-    odd_indices = list(range(1, 44, 2))
+    odd_indices = list(range(1, num_feats, 2))
     data1_odd = data1[odd_indices]
     data2_odd = data2[odd_indices]
 
-    data1_stromal_even = np.nanmean(data1_even[:11])
-    data2_stromal_even = np.nanmean(data2_even[:11])
-    data1_peritumoral_even = np.nanmean(data1_even[11:])
-    data2_peritumoral_even = np.nanmean(data2_even[11:])
+    data1_stromal_even = np.nanmean(data1_even[:num_feats//4])
+    data2_stromal_even = np.nanmean(data2_even[:num_feats//4])
+    data1_peritumoral_even = np.nanmean(data1_even[num_feats//4:])
+    data2_peritumoral_even = np.nanmean(data2_even[num_feats//4:])
 
-    data1_stromal_odd = np.nanmax(data1_odd[:11])
-    data2_stromal_odd = np.nanmax(data2_odd[:11])
-    data1_peritumoral_odd = np.nanmax(data1_odd[11:])
-    data2_peritumoral_odd = np.nanmax(data2_odd[11:])
+    data1_stromal_odd = np.nanmax(data1_odd[:num_feats//4])
+    data2_stromal_odd = np.nanmax(data2_odd[:num_feats//4])
+    data1_peritumoral_odd = np.nanmax(data1_odd[num_feats//4:])
+    data2_peritumoral_odd = np.nanmax(data2_odd[num_feats//4:])
 
     if year2 > year1:
         stromal_even_diff =  data2_stromal_even - data1_stromal_even
@@ -98,8 +98,8 @@ df_black = pd.DataFrame(df_black)
 df_white = pd.DataFrame(df_white)
 
 # Save to CSV with column names
-df_black.to_csv("black_cohort_differences.csv", index=False)
-df_white.to_csv("white_cohort_differences.csv", index=False)
+df_black.to_csv("data/hari_BC/csv/otsu2_black_cohort_differences.csv", index=False)
+df_white.to_csv("data/hari_BC/csv/otsu2_white_cohort_differences.csv", index=False)
 
 # 1. Read the CSV
 # 1. Read the CSVs
@@ -156,4 +156,4 @@ axes[1].set_ylabel("Value")
 
 plt.suptitle("Black vs White Cohort: Stromal & Peritumoral Boxplots")
 plt.tight_layout()
-plt.show()
+plt.savefig("otsu2_BvW_comparison.png", dpi=300)
