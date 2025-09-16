@@ -12,11 +12,13 @@ import math
 import os
 import glob
 import argparse
+from tqdm import tqdm
 
 # MAIN CODE
 
 # Parameters for analysis
-win_sizes = [100, 125, 150, 175, 200]  # List of window sizes for feature extraction
+# win_sizes = [100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600]  # List of window sizes for feature extraction
+win_sizes = [25,50,60,100]
 filter_scale = 3   # Filter scale for BIFS computation
 feature_descriptor = 5  # Descriptor to identify collagen features
 orient_num = 180 // 10  # Number of orientation bins
@@ -25,32 +27,37 @@ orient_num = 180 // 10  # Number of orientation bins
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_patch', help='Input patches', default='data/patches/')
 parser.add_argument('--input_mask', help='Input masks', default='data/masks/')
+parser.add_argument('--fat_mask', help='Input fat masks', default='data/fat_masks/')
 parser.add_argument('--output_heatmaps_stroma_win', help='Output heatmaps for stromal areas', default='results/heatmaps_stroma/')
 parser.add_argument('--output_heatmaps_peritumoral_win', help='Output heatmaps for peritumoral areas', default='results/heatmaps_peritumoral/')
 args = parser.parse_args()
 
 # Set folder paths from arguments
 patches_folder = args.input_patch
-mask_folder = args.input_mask
+epi_mask_folder = args.input_mask
+fat_mask_folder = args.fat_mask
 patches_files = glob.glob(patches_folder + "*png")  # Get all patch files
+os.makedirs(args.output_heatmaps_stroma_win, exist_ok=True)
+os.makedirs(args.output_heatmaps_peritumoral_win, exist_ok=True)
 
 # Process each patch file
-for file in patches_files:
+for file in tqdm(patches_files):
     print(file)
 
     # Skip files without a corresponding mask
-    mask_path = mask_folder + file.split("/")[-1]
-    if not os.path.isfile(mask_path):
+    # mask_path is the epi_mask
+    epi_mask_path = epi_mask_folder + file.split("/")[-1]
+    fat_mask_path = fat_mask_folder + file.split("/")[-1]
+    if not os.path.isfile(epi_mask_path) or not os.path.isfile(fat_mask_path):
+        # print("No mask found!!")
+        print(epi_mask_path, fat_mask_path)
         continue
 
     features = []
 
-    filename = file.split("/")[-1]
-    if filename not in lis:
-        continue
-
-    # Read the patch and its corresponding mask
-    mask = 255 - cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)  # Invert the mask
+    # Read the patch and its corresponding masks
+    epi_mask = 255 - cv2.imread(epi_mask_path, cv2.IMREAD_GRAYSCALE)  # Invert the epi mask
+    fat_mask = 255 - cv2.imread(fat_mask_path, cv2.IMREAD_GRAYSCALE)  # Invert the fat mask
     patch = cv2.imread(file)
     patch = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)  # Convert to RGB
 
@@ -60,7 +67,8 @@ for file in patches_files:
     frag_thresh = filter_scale * 10  # Threshold to filter small objects
     bifs, jet = compute_bifs(patch, filter_scale, 0.015, 1.5)  # Compute BIFS
     collagen_mask = bifs == feature_descriptor  # Identify collagen regions
-    collagen_mask = np.logical_and(collagen_mask, mask)  # Apply the tissue mask
+    collagen_mask = np.logical_and(collagen_mask, epi_mask)  # Exclude epithelial regions
+    collagen_mask = np.logical_and(collagen_mask, fat_mask)  # Exclude fat regions
     collagen_mask = morphology.remove_small_objects(collagen_mask.astype(bool), min_size=frag_thresh)  # Remove small regions
 
     # Extract collagen centroid and orientation information
@@ -108,14 +116,14 @@ for file in patches_files:
         heatmap_uint8 = np.uint8(heatmap_normalized)
         heatmap_colormap = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
         heatmap_colormap = cv2.resize(heatmap_colormap, (int(patch.shape[0]), int(patch.shape[1])))
-        overlayed_image = cv2.addWeighted(patch, 0.2, heatmap_colormap, 0.8, 0)
+        overlayed_image = cv2.addWeighted(patch, 0.3, heatmap_colormap, 0.7, 0)
         cv2.imwrite(args.output_heatmaps_stroma_win + file.split("/")[-1][:-4] + f"_stroma_{win_size}.png", overlayed_image)
 
     # SECOND SET OF FEATURES: Extract features from peritumoral areas
 
-    # Dilate the mask to define peritumoral regions
-    im_dilated = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
-    for _ in range(50):
+    # Dilate the epi_mask to define peritumoral regions
+    im_dilated = cv2.imread(epi_mask_path, cv2.IMREAD_GRAYSCALE)
+    for _ in range(25):
         im_dilated = cv2.dilate(im_dilated, np.ones((5, 5), np.uint8), iterations=1)
     im_new = im_dilated
     for _ in range(150):
@@ -127,6 +135,8 @@ for file in patches_files:
     collagen_mask = bifs == feature_descriptor
     collagen_mask = np.logical_and(collagen_mask, im_new)
     collagen_mask = np.logical_and(collagen_mask, 255 - im_dilated)
+    collagen_mask = np.logical_and(collagen_mask, epi_mask)  # Exclude epithelial regions
+    collagen_mask = np.logical_and(collagen_mask, fat_mask)  # Exclude fat regions
     collagen_mask = morphology.remove_small_objects(collagen_mask.astype(bool), min_size=frag_thresh)
 
     # Extract collagen centroid and orientation information
@@ -177,5 +187,5 @@ for file in patches_files:
         heatmap_uint8 = np.uint8(heatmap_normalized)
         heatmap_colormap = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
         heatmap_colormap = cv2.resize(heatmap_colormap, (int(patch.shape[0]), int(patch.shape[1])))
-        overlayed_image = cv2.addWeighted(patch, 0.2, heatmap_colormap, 0.8, 0)
+        overlayed_image = cv2.addWeighted(patch, 0.3, heatmap_colormap, 0.7, 0)
         cv2.imwrite(args.output_heatmaps_peritumoral_win + file.split("/")[-1][:-4] + f"_peritumoral_{win_size}.png", overlayed_image)
