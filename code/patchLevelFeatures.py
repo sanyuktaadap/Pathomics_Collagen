@@ -14,7 +14,7 @@ import csv
 from extract_feat import extract_collagen_feats
 from tqdm import tqdm
 
-def extract_patch_level_features(patches_folder, epi_mask_folder, fat_mask_folder, win_sizes, output_feat_folder):
+def extract_patch_level_features(patches_folder, epi_mask_folder, bg_mask_folder, win_sizes, output_feat_folder):
     filter_scale = 3
     feat = 5
     patches_files = glob.glob(os.path.join(patches_folder, "*png"))
@@ -23,7 +23,7 @@ def extract_patch_level_features(patches_folder, epi_mask_folder, fat_mask_folde
     for file in tqdm(patches_files):
         file_name = file.split("/")[-1]
 
-        if not os.path.isfile(os.path.join(epi_mask_folder, file_name)) or not os.path.isfile(os.path.join(fat_mask_folder, file_name)):
+        if not os.path.isfile(os.path.join(epi_mask_folder, file_name)) or not os.path.isfile(os.path.join(bg_mask_folder, file_name)):
             continue
 
         features = []
@@ -35,10 +35,8 @@ def extract_patch_level_features(patches_folder, epi_mask_folder, fat_mask_folde
         epi_mask = cv2.imread(os.path.join(epi_mask_folder, file_name),
                             cv2.IMREAD_GRAYSCALE)
         epi_mask = 255 - epi_mask
-
-        fat_mask = cv2.imread(os.path.join(fat_mask_folder, file_name),
+        bg_mask = cv2.imread(os.path.join(bg_mask_folder, file_name),
                               cv2.IMREAD_GRAYSCALE)
-        fat_mask = 255 - fat_mask
 
         # FIRST SET OF FEATURES FROM ENTIRE STROMAL AREAS
         # extract collagen fiber mask
@@ -46,7 +44,7 @@ def extract_patch_level_features(patches_folder, epi_mask_folder, fat_mask_folde
         bifs, _ = compute_bifs(patch, filter_scale, 0.015, 1.5)
         collagen_mask = bifs == feat
         collagen_mask = np.logical_and(collagen_mask, epi_mask)
-        collagen_mask = np.logical_and(collagen_mask, fat_mask)
+        collagen_mask = np.logical_and(collagen_mask, bg_mask)
         collagen_mask = morphology.remove_small_objects(collagen_mask.astype(bool),
                                                         min_size=frag_thresh)
 
@@ -70,7 +68,7 @@ def extract_patch_level_features(patches_folder, epi_mask_folder, fat_mask_folde
         collagen_mask = np.logical_and(collagen_mask, im_new)
         collagen_mask = np.logical_and(collagen_mask, 255 - im_dilated)
         collagen_mask = np.logical_and(collagen_mask, epi_mask)  # Exclude epithelial regions
-        collagen_mask = np.logical_and(collagen_mask, fat_mask)  # Exclude fat regions
+        collagen_mask = np.logical_and(collagen_mask, bg_mask)  # Exclude fat regions
         collagen_mask = morphology.remove_small_objects(collagen_mask.astype(bool),
                                                         min_size=frag_thresh)
 
@@ -93,16 +91,16 @@ if __name__ == "__main__":
 
     # read patches and masks
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input_patch', help='Patches Folder', default='data/patches/')
-    parser.add_argument('--epi_mask', help='Masks Folder', default='data/masks/')
-    parser.add_argument('--fat_mask', help='Fat Masks Folder', default='data/fat_masks/')
-    parser.add_argument('--output_feature', help='Output Features Folder', default='results/patch_features/')
-    parser.add_argument('--win_sizes', help='Window Sizes to convole over the image', default=[65,70,75])
+    parser.add_argument("-p", '--input_patch', help='Input patches', default='data/patches/')
+    parser.add_argument("-e", '--epi_mask', help='Input masks', default='data/masks/')
+    parser.add_argument("-b", '--bg_mask', help='Input fat masks', default='data/bg_mask/')
+    parser.add_argument("-o", '--output_feature', help='Output Features Folder', default='results/patch_features/')
+    parser.add_argument('--win_sizes', help='Window Sizes to convole over the image', default=[60,65,70])
     args = parser.parse_args()
 
     patches_folder = args.input_patch
     epi_mask_folder = args.epi_mask
-    fat_mask_folder = args.fat_mask
+    bg_mask_folder = args.bg_mask
     output_feat_folder = args.output_feature
     win_sizes = args.win_sizes
 
@@ -110,6 +108,6 @@ if __name__ == "__main__":
     for cohort in cohorts:
         cohort_patch_fold = os.path.join(patches_folder, cohort)
         cohort_epi_mask_fold = os.path.join(epi_mask_folder, cohort)
-        cohort_fat_mask_fold = os.path.join(fat_mask_folder, cohort)
+        cohort_bg_mask_fold = os.path.join(bg_mask_folder, cohort)
         os.makedirs(os.path.join(output_feat_folder, cohort), exist_ok=True)
-        extract_patch_level_features(cohort_patch_fold, cohort_epi_mask_fold, cohort_fat_mask_fold, win_sizes, os.path.join(output_feat_folder, cohort))
+        extract_patch_level_features(cohort_patch_fold, cohort_epi_mask_fold, cohort_bg_mask_fold, win_sizes, os.path.join(output_feat_folder, cohort))

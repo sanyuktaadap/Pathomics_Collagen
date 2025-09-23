@@ -8,40 +8,47 @@ import glob
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-def get_epi_stroma_fat_mask_hed(patch):
-    # Convert BGR → RGB
+def get_epithelium_mask(patch, fg_mask):
+    """
+    Generate epithelium mask from a patch using the hematoxylin channel,
+    guided by a pre-computed foreground/background mask.
+
+    Args:
+        patch (np.array): BGR patch image.
+        fg_mask (np.array): Binary mask of foreground (255 = tissue, 0 = background).
+
+    Returns:
+        epi_mask (np.array): Binary epithelium mask (255 = epithelium, 0 = stroma/background).
+    """
+    # Ensure masks are single channel binary
+    fg_mask = (fg_mask > 0).astype(np.uint8)
+
+    # Convert BGR → RGB → HED
     rgb = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)
-
-    # Convert to HED
     hed = color.rgb2hed(rgb)
-
-    # --- Epithelium (from Hematoxylin channel) ---
     hematoxylin = hed[:, :, 0]
-    _, epi_mask = cv2.threshold(
-        (hematoxylin * 255).astype(np.uint8),
-        0, 255,
-        cv2.THRESH_BINARY + cv2.THRESH_OTSU
-    )
 
-    # Clean epithelium
-    frag_thresh = 200
-    epi_mask = morphology.remove_small_objects(epi_mask.astype(bool), min_size=frag_thresh)
+    # Scale hematoxylin channel to [0, 255]
+    hematoxylin_scaled = cv2.normalize(hematoxylin, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+
+    # Apply foreground mask → only keep tissue region
+    tissue_hema = cv2.bitwise_and(hematoxylin_scaled, hematoxylin_scaled, mask=fg_mask)
+
+    # Otsu thresholding within tissue region
+    _, epi_mask = cv2.threshold(tissue_hema, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    # Restrict result strictly to tissue area
+    epi_mask = cv2.bitwise_and(epi_mask, epi_mask, mask=fg_mask)
+
+    # Morphological cleaning
+    epi_mask = morphology.remove_small_objects(epi_mask.astype(bool), min_size=200)
     epi_mask = (epi_mask.astype(np.uint8)) * 255
     kernel = np.ones((2, 2), np.uint8)
-    epi_mask = cv2.dilate(epi_mask, kernel, iterations=30)
-    epi_mask = cv2.erode(epi_mask, kernel, iterations=30)
+    epi_mask = cv2.dilate(epi_mask, kernel, iterations=60)
+    epi_mask = cv2.erode(epi_mask, kernel, iterations=50)
     epi_mask = binary_fill_holes(epi_mask.astype(bool)).astype(np.uint8) * 255
 
-    # apply epi_mask on grayscale patch and make teh epithelium region black on the patch.
-    gray_patch = cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY)
-    gray_patch[epi_mask.astype(bool)] = 0
-    # threshold on white regions (intensity >= 230)
-    _, fat_mask = cv2.threshold(gray_patch, 230, 255, cv2.THRESH_BINARY)
-    # dialate + erode to get rid of fine lines in fatty tissue
-    fat_mask = cv2.dilate(fat_mask, kernel, iterations=15)
-    fat_mask = cv2.erode(fat_mask, kernel, iterations=15)
-
-    return epi_mask, fat_mask
+    return epi_mask
 
 
 def visualize_patch_with_masks(patch, labeled_mask):
@@ -64,43 +71,21 @@ def visualize_patch_with_masks(patch, labeled_mask):
 
     return patch_rgb, mask_rgb
 
-
 cohorts = ["Black_cohort", "White_cohort"]
 for cohort in cohorts:
-    os.makedirs(f"data/hari_BC/otsu/epithelium_mask/{cohort}/", exist_ok=True)
-    os.makedirs(f"data/hari_BC/otsu/fat_mask/{cohort}/", exist_ok=True)
+    os.makedirs(f"data/hari_BC/otsu/epi_mask_no_bg/{cohort}/", exist_ok=True)
 
     data_path = f"data/hari_BC/patches/{cohort}/"
+    fg_paths = f"data/hari_BC/bg_mask/{cohort}"
 
     paths = glob.glob(os.path.join(data_path, "*.png"))
     print(paths)
 
     for path in tqdm(paths):
+        name = os.path.basename(path)
+        fg_path = os.path.join(fg_paths, name)
         patch = cv2.imread(path)
-        epi_mask, fat_mask = get_epi_stroma_fat_mask_hed(patch)
+        fg_mask = cv2.imread(fg_path, cv2.IMREAD_GRAYSCALE)
+        epi_mask = get_epithelium_mask(patch, fg_mask)
         filename = os.path.basename(path)
-        cv2.imwrite(f"data/hari_BC/otsu/epithelium_mask/{cohort}/{filename}", epi_mask)
-        cv2.imwrite(f"data/hari_BC/otsu/fat_mask/{cohort}/{filename}", fat_mask)
-
-# data_path = "data/hari_BC/test/patches"
-
-# os.makedirs(f"data/hari_BC/test/labeled_mask/", exist_ok=True)
-# os.makedirs(f"data/hari_BC/test/epi_mask/", exist_ok=True)
-# os.makedirs(f"data/hari_BC/test/stroma_mask/", exist_ok=True)
-# os.makedirs(f"data/hari_BC/test/fat_mask2/", exist_ok=True)
-# os.makedirs(f"data/hari_BC/test/visualize/", exist_ok=True)
-
-# paths = glob.glob(os.path.join(data_path, "*.png"))
-# print(paths)
-
-# for path in tqdm(paths):
-#     patch = cv2.imread(path)
-#     epi_mask, fat_mask = get_epi_stroma_fat_mask_hed(patch)
-#     filename = os.path.basename(path)
-#     # cv2.imwrite(f"data/hari_BC/test/labeled_mask/{filename}", labeled_mask)
-#     cv2.imwrite(f"data/hari_BC/test/epi_mask/{filename}", epi_mask)
-#     # cv2.imwrite(f"data/hari_BC/test/stroma_mask/{filename}", stroma_mask)
-#     cv2.imwrite(f"data/hari_BC/test/fat_mask2/{filename}", fat_mask)
-
-#     # patch_rgb, mask_reb = visualize_patch_with_masks(patch, labeled_mask)
-#     # cv2.imwrite(f"data/hari_BC/test/visualize/{filename}", cv2.cvtColor(np.hstack((patch_rgb, mask_reb)), cv2.COLOR_RGB2BGR))
+        cv2.imwrite(f"data/hari_BC/otsu/epi_mask_no_bg/{cohort}/{filename}", epi_mask)

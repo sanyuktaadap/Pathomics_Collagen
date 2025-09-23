@@ -18,24 +18,24 @@ from tqdm import tqdm
 
 # Parameters for analysis
 # win_sizes = [100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600]  # List of window sizes for feature extraction
-win_sizes = [25,50,60,100]
+win_sizes = [60,65,70]
 filter_scale = 3   # Filter scale for BIFS computation
 feature_descriptor = 5  # Descriptor to identify collagen features
 orient_num = 180 // 10  # Number of orientation bins
 
 # Parse command-line arguments to specify input/output paths
 parser = argparse.ArgumentParser()
-parser.add_argument('--input_patch', help='Input patches', default='data/patches/')
-parser.add_argument('--input_mask', help='Input masks', default='data/masks/')
-parser.add_argument('--fat_mask', help='Input fat masks', default='data/fat_masks/')
-parser.add_argument('--output_heatmaps_stroma_win', help='Output heatmaps for stromal areas', default='results/heatmaps_stroma/')
-parser.add_argument('--output_heatmaps_peritumoral_win', help='Output heatmaps for peritumoral areas', default='results/heatmaps_peritumoral/')
+parser.add_argument("-p", '--input_patch', help='Input patches', default='data/patches/')
+parser.add_argument("-e", '--epi_mask', help='Input masks', default='data/masks/')
+parser.add_argument("-f", '--bg_mask', help='Input fg/bg masks', default='data/bg_mask/')
+parser.add_argument("-s", '--output_heatmaps_stroma_win', help='Output heatmaps for stromal areas', default='results/heatmaps_stroma/')
+parser.add_argument("-pt", '--output_heatmaps_peritumoral_win', help='Output heatmaps for peritumoral areas', default='results/heatmaps_peritumoral/')
 args = parser.parse_args()
 
 # Set folder paths from arguments
 patches_folder = args.input_patch
-epi_mask_folder = args.input_mask
-fat_mask_folder = args.fat_mask
+epi_mask_folder = args.epi_mask
+bg_mask_folder = args.bg_mask
 patches_files = glob.glob(patches_folder + "*png")  # Get all patch files
 os.makedirs(args.output_heatmaps_stroma_win, exist_ok=True)
 os.makedirs(args.output_heatmaps_peritumoral_win, exist_ok=True)
@@ -47,17 +47,17 @@ for file in tqdm(patches_files):
     # Skip files without a corresponding mask
     # mask_path is the epi_mask
     epi_mask_path = epi_mask_folder + file.split("/")[-1]
-    fat_mask_path = fat_mask_folder + file.split("/")[-1]
-    if not os.path.isfile(epi_mask_path) or not os.path.isfile(fat_mask_path):
+    bg_mask_path = bg_mask_folder + file.split("/")[-1]
+    if not os.path.isfile(epi_mask_path) or not os.path.isfile(bg_mask_path):
         # print("No mask found!!")
-        print(epi_mask_path, fat_mask_path)
+        print(epi_mask_path, bg_mask_path)
         continue
 
     features = []
 
     # Read the patch and its corresponding masks
     epi_mask = 255 - cv2.imread(epi_mask_path, cv2.IMREAD_GRAYSCALE)  # Invert the epi mask
-    fat_mask = 255 - cv2.imread(fat_mask_path, cv2.IMREAD_GRAYSCALE)  # Invert the fat mask
+    bg_mask = cv2.imread(bg_mask_path, cv2.IMREAD_GRAYSCALE)
     patch = cv2.imread(file)
     patch = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)  # Convert to RGB
 
@@ -68,7 +68,7 @@ for file in tqdm(patches_files):
     bifs, jet = compute_bifs(patch, filter_scale, 0.015, 1.5)  # Compute BIFS
     collagen_mask = bifs == feature_descriptor  # Identify collagen regions
     collagen_mask = np.logical_and(collagen_mask, epi_mask)  # Exclude epithelial regions
-    collagen_mask = np.logical_and(collagen_mask, fat_mask)  # Exclude fat regions
+    collagen_mask = np.logical_and(collagen_mask, bg_mask)  # Exclude bg regions
     collagen_mask = morphology.remove_small_objects(collagen_mask.astype(bool), min_size=frag_thresh)  # Remove small regions
 
     # Extract collagen centroid and orientation information
@@ -136,7 +136,7 @@ for file in tqdm(patches_files):
     collagen_mask = np.logical_and(collagen_mask, im_new)
     collagen_mask = np.logical_and(collagen_mask, 255 - im_dilated)
     collagen_mask = np.logical_and(collagen_mask, epi_mask)  # Exclude epithelial regions
-    collagen_mask = np.logical_and(collagen_mask, fat_mask)  # Exclude fat regions
+    collagen_mask = np.logical_and(collagen_mask, bg_mask)  # Exclude bg regions
     collagen_mask = morphology.remove_small_objects(collagen_mask.astype(bool), min_size=frag_thresh)
 
     # Extract collagen centroid and orientation information
