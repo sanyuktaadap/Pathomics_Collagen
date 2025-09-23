@@ -23,7 +23,7 @@ def extract_patient_level_features(slides, patch_features, output):
         patch_feats = glob.glob(os.path.join(patch_features, filename + "*"))
 
         # Initialize a zero vector to hold aggregated slide-level features
-        file_features = np.zeros(44)
+        file_features = np.zeros(12)
 
         # Iterate over each patch feature file for the current slide
         for feat in patch_feats:
@@ -62,9 +62,13 @@ if __name__ == "__main__":
     parser.add_argument('--output', help='Output patient level features', default='results/patient_features/')
     args = parser.parse_args()
 
-    slides = args.input_files
-    slides = glob.glob(slides+"*")
-    patch_features = args.input_features
-    output = args.output
-    os.makedirs(args.output, exist_ok=True)
-    extract_patient_level_features(slides, patch_features, output)
+    cohorts = ['Black_cohort', 'White_cohort']
+    for cohort in cohorts:
+        slides = os.path.join(args.input_files, cohort)
+        print(slides)
+        patch_features = os.path.join(args.input_features, cohort)
+
+        output = os.path.join(args.output, cohort)
+        slides = glob.glob(os.path.join(slides, "*"))
+        os.makedirs(output, exist_ok=True)
+        extract_patient_level_features(slides, patch_features, output)

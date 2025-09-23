@@ -6,23 +6,24 @@ import csv
 from tqdm import tqdm
 import math
 
-cohorts = ["Black", "White"]
-for cohort in cohorts:
+patient_feats_fold_name = "otsu_patient_feats3_60_70"
+cohorts = ["White", "Black"]
 
-    files = glob.glob(f'data/hari_BC/patient_feats/{cohort}_cohort/*.csv')
+for cohort in cohorts:
+    files = glob.glob(f'data/hari_BC/otsu/{patient_feats_fold_name}/{cohort}_cohort/*.csv')
     # get all files that hvae '-' in thier file names
     slides = [f for f in files if '-' in f]
     count = 0
     for slide in slides:
         name = slide.split("/")[-1]
         pid = name.split("-")[0]
-        file1 = f"data/hari_BC/patient_feats/{cohort}_cohort/{pid}-1_H&E_Breast_XXXXXXXX.csv"
-        file2 = f"data/hari_BC/patient_feats/{cohort}_cohort/{pid}-2_H&E_Breast_XXXXXXXX.csv"
+        file1 = f"data/hari_BC/otsu/{patient_feats_fold_name}/{cohort}_cohort/{pid}-1_H&E_Breast_XXXXXXXX.csv"
+        file2 = f"data/hari_BC/otsu/{patient_feats_fold_name}/{cohort}_cohort/{pid}-2_H&E_Breast_XXXXXXXX.csv"
         feats = [file1, file2]
 
         # Initialize a zero vector to hold aggregated slide-level features
-        file_features = np.zeros(44)
-        even_counts = np.zeros(44)  # count valid values at even indices
+        file_features = np.zeros(12)
+        even_counts = np.zeros(12)  # count valid values at even indices
 
         # Iterate over each patch feature file for the current slide
         for feat in feats:
@@ -64,8 +65,9 @@ for cohort in cohorts:
             # file_features[index] = file_features[index] / len(feats)
 
         # Save the final patient-level features to a CSV file
-        output_file = f"data/hari_BC/patient_feats/{cohort}_cohort/{pid}_H&E_Breast_XXXXXXXX.csv"
-        # output_file = f"temp_results/{pid}_H&E_Breast_XXXXXXXX.csv"
+        output_file = f"data/hari_BC/otsu/{patient_feats_fold_name}/{cohort}_cohort/{pid}_H&E_Breast_XXXXXXXX.csv"
+        # output_file = f"data/hari_BC/temp_results/{pid}_H&E_Breast_XXXXXXXX.csv"
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
         with open(output_file, mode='w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(file_features)

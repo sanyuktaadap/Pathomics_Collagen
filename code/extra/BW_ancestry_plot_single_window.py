@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-sizes = [65, 70, 75]
+sizes = [60, 65, 70]
 # repeat each element twice
 sizes = [item for sublist in [[s, s] for s in sizes] for item in sublist]
 # Repeat this whole list at the end of the list - stromal and peritumoral
@@ -10,10 +10,12 @@ sizes = sizes + sizes
 
 process_list = pd.read_csv("data/hari_BC/csv/BnW_combined.csv")
 
-donor_col = 2
-year_col = 4
-new_name_col = 5
-cohort_col = 6
+donor_col = 0
+year_col = 5
+new_name_col = 6
+cohort_col = 7
+
+patient_feats_fold_name = "otsu_patient_feats3_60_70"
 
 for analysis_win in sizes:
     prefix = f"win_{analysis_win}_"
@@ -55,8 +57,8 @@ for analysis_win in sizes:
         cohort = process_list.iloc[i, cohort_col]
 
         # Load the CSVs (no headers)
-        csv_1 = pd.read_csv(f'data/hari_BC/otsu/otsu_patient_feats/{cohort}_cohort/{p1}_H&E_Breast_XXXXXXXX.csv', header=None)
-        csv_2 = pd.read_csv(f'data/hari_BC/otsu/otsu_patient_feats/{cohort}_cohort/{p2}_H&E_Breast_XXXXXXXX.csv', header=None)
+        csv_1 = pd.read_csv(f'data/hari_BC/otsu/{patient_feats_fold_name}/{cohort}_cohort/{p1}_H&E_Breast_XXXXXXXX.csv', header=None)
+        csv_2 = pd.read_csv(f'data/hari_BC/otsu/{patient_feats_fold_name}/{cohort}_cohort/{p2}_H&E_Breast_XXXXXXXX.csv', header=None)
 
         # Extract values as 1D arrays
         # The first 22 columns are stromal, the next 22 are peritumoral
@@ -122,13 +124,8 @@ for analysis_win in sizes:
     df_white = pd.DataFrame(df_white)
 
     # Save to CSV with column names
-    df_black.to_csv(f"data/hari_BC/csv/{prefix}otsu_black_cohort_differences.csv", index=False)
-    df_white.to_csv(f"data/hari_BC/csv/{prefix}otsu_white_cohort_differences.csv", index=False)
-
-    # 1. Read the CSV
-    # 1. Read the CSVs
-    # df_black = pd.read_csv("black_cohort_differences.csv")
-    # df_white = pd.read_csv("white_cohort_differences.csv")
+    df_black.to_csv(f"data/hari_BC/csv/{prefix}otsu3_black_cohort_differences.csv", index=False)
+    df_white.to_csv(f"data/hari_BC/csv/{prefix}otsu3_white_cohort_differences.csv", index=False)
 
     # 2. Column groups
     mean_cols = ["Stromal_Mean", "Peritumoral_Mean"]
@@ -155,29 +152,53 @@ for analysis_win in sizes:
     # --- Means plot ---
     box1 = axes[0].boxplot(mean_data,
                         labels=["Stromal:Black", "Stromal:White", "Peritumoral:Black", "Peritumoral:White"],
-                        patch_artist=True)
+                        patch_artist=True,
+                        medianprops=dict(color="black", linewidth=1),   # black median line
+                        showmeans=True, meanline=True,                 # mean line
+                        meanprops=dict(color="black", linestyle="--", linewidth=1))  # dotted mean line
 
     # Colors for means
     mean_colors = ["#FF69B4", "#FF1493", "#9370DB", "#8A2BE2"]  # pinks & violets
     for patch, color in zip(box1['boxes'], mean_colors):
         patch.set_facecolor(color)
 
+    # Overlay median markers
+    for i, line in enumerate(box1['medians']):
+        x, y = line.get_xydata()[1]   # (x, y) of median
+
     axes[0].set_title("Mean Values")
     axes[0].set_ylabel("Value")
+
+    # Legend for left plot (upper left)
+    median_line = plt.Line2D([0], [0], color="black", linewidth=1, label="Median")
+    mean_line = plt.Line2D([0], [0], color="black", linestyle="--", linewidth=1, label="Mean")
+    axes[0].legend(handles=[median_line, mean_line], loc="upper left")
 
     # --- Max plot ---
     box2 = axes[1].boxplot(max_data,
                         labels=["Stromal:Black", "Stromal:White", "Peritumoral:Black", "Peritumoral:White"],
-                        patch_artist=True)
+                        patch_artist=True,
+                        medianprops=dict(color="black", linewidth=1),   # black median line
+                        showmeans=True, meanline=True,
+                        meanprops=dict(color="black", linestyle="--", linewidth=1))  # dotted mean line
 
     # Colors for max
     max_colors = ["#FF69B4", "#FF1493", "#9370DB", "#8A2BE2"]
     for patch, color in zip(box2['boxes'], max_colors):
         patch.set_facecolor(color)
 
+    # Overlay median markers
+    for i, line in enumerate(box2['medians']):
+        x, y = line.get_xydata()[1]   # (x, y) of median
+
     axes[1].set_title("Max Values")
     axes[1].set_ylabel("Value")
 
+    # Legend for right plot (upper left)
+    median_line = plt.Line2D([0], [0], color="black", linewidth=1, label="Median")
+    mean_line = plt.Line2D([0], [0], color="black", linestyle="--", linewidth=1, label="Mean")
+    axes[1].legend(handles=[median_line, mean_line], loc="upper right")
+
     plt.suptitle("Black vs White Cohort: Stromal & Peritumoral Boxplots")
     plt.tight_layout()
-    plt.savefig(f"{prefix}otsu_BvW_comparison.png", dpi=300)
+    plt.savefig(f"data/hari_BC/plots/{prefix}otsu3_BvW_comparison.png", dpi=300)
