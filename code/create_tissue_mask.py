@@ -55,7 +55,7 @@ def is_edge_patch_array(patch_array, patch_size=3000, intensity_thresh=220):
         return False
 
 
-def generate_patch_mask(image_path, mask_save_path, patch_size=3000, stride=None, intensity_thresh=220):
+def generate_patch_mask(image_path, mask_save_path, patch_size=100, stride=None, intensity_thresh=220):
     """
     Generates a binary mask for the entire image using patch-based classification.
     - White (255) = foreground/tissue
