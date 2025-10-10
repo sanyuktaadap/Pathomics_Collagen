@@ -91,10 +91,10 @@ if __name__ == "__main__":
 
     # read patches and masks
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", '--input_patch', help='Input patches', default='data/patches/')
-    parser.add_argument("-e", '--epi_mask', help='Input masks', default='data/masks/')
-    parser.add_argument("-b", '--bg_mask', help='Input fat masks', default='data/bg_mask/')
-    parser.add_argument("-o", '--output_feature', help='Output Features Folder', default='results/patch_features/')
+    parser.add_argument("-p", '--input_patch', help='Input patches', default='data/hari_BC/patches/')
+    parser.add_argument("-e", '--epi_mask', help='Input masks', default='data/hari_BC/otsu/epi_mask_no_bg/')
+    parser.add_argument("-b", '--bg_mask', help='Input fat masks', default='data/hari_BC/bg_mask/')
+    parser.add_argument("-o", '--output_feature', help='Output Features Folder', default='data/hari_BC/otsu/otsu_patch_feats4_60_70/')
     parser.add_argument('--win_sizes', help='Window Sizes to convole over the image', default=[60,65,70])
     args = parser.parse_args()
 
