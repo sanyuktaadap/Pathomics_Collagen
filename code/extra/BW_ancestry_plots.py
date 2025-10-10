@@ -4,26 +4,32 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 
 process_list = pd.read_csv("data/hari_BC/csv/BnW_combined.csv")
-patient_feats_fold_name = "otsu_patient_feats3_60_70"
+patient_feats_fold_name = "otsu_patient_feats4_60_70"
 
 num_feats = 12
 donor_col = 0
 year_col = 5
-new_name_col = 6
-cohort_col = 7
+new_name_col = 7
+cohort_col = 8
+age_col = 4
 
-# Create B & W means and max csv
+# Create B & W means and max csv  + Age
 df_black = {"donor": [],
+            "Age": [],  # age at first timepoint
             "Stromal_Mean": [],
             "Stromal_Max": [],
             "Peritumoral_Mean": [],
             "Peritumoral_Max": []}
 
 df_white = {"donor": [],
+            "Age": [],  # age at first timepoint
             "Stromal_Mean": [],
             "Stromal_Max": [],
             "Peritumoral_Mean": [],
             "Peritumoral_Max": []}
+
+# Drop rows with "_01.svs" in the new_name_col
+process_list = process_list[~process_list.iloc[:, new_name_col].str.contains("_01.svs", na=False)]
 
 for i in range(0, len(process_list), 2):
     donor = process_list.iloc[i, donor_col]
@@ -35,28 +41,36 @@ for i in range(0, len(process_list), 2):
     year1 = process_list.iloc[i, year_col]
     year2 = process_list.iloc[i+1, year_col]
 
-    p1 = process_list.iloc[i, new_name_col].split("/")[-1]
-    p2 = process_list.iloc[i+1, new_name_col].split("/")[-1]
+    # Ensure year2 > year1 and at least 2 years apart (outliers)
+    if year2 - year1 < 2:
+        continue
 
-    p1 = p1.split("_")[0]
-    p2 = p2.split("_")[0]
+    # Age at first timepoint only (year2 can be anything)
+    age1 = process_list.iloc[i, age_col]
+    # Exclude older subjects (outliers)
+    if age1 > 60:
+        continue
+
+    new_name_1 = process_list.iloc[i, new_name_col].replace(".svs", ".csv")
+    new_name_2 = process_list.iloc[i+1, new_name_col].replace(".svs", ".csv")
+    print(new_name_1, new_name_2)
 
     cohort = process_list.iloc[i, cohort_col]
 
     # Load the CSVs (no headers)
-    csv_1 = pd.read_csv(f'data/hari_BC/otsu/{patient_feats_fold_name}/{cohort}_cohort/{p1}_H&E_Breast_XXXXXXXX.csv', header=None)
-    csv_2 = pd.read_csv(f'data/hari_BC/otsu/{patient_feats_fold_name}/{cohort}_cohort/{p2}_H&E_Breast_XXXXXXXX.csv', header=None)
+    csv_1 = pd.read_csv(f'data/hari_BC/otsu/{patient_feats_fold_name}/{cohort}_cohort/{new_name_1}', header=None)
+    csv_2 = pd.read_csv(f'data/hari_BC/otsu/{patient_feats_fold_name}/{cohort}_cohort/{new_name_2}', header=None)
 
     # Extract values as 1D arrays
     data1 = csv_1.values.flatten()
     data2 = csv_2.values.flatten()
 
-    # Select only even indices (0, 2, ..., 42) - Means
+    # Even indices -> Means
     even_indices = list(range(0, num_feats, 2))
     data1_even = data1[even_indices]
     data2_even = data2[even_indices]
 
-    # Select only odd indices (1, 3, ..., 43) - Max
+    # Odd indices -> Max
     odd_indices = list(range(1, num_feats, 2))
     data1_odd = data1[odd_indices]
     data2_odd = data2[odd_indices]
@@ -80,6 +94,7 @@ for i in range(0, len(process_list), 2):
 
         if cohort == "Black":
             df_black["donor"].append(donor)
+            df_black["Age"].append(age1)  # store age at timepoint 1
             df_black["Stromal_Mean"].append(stromal_even_diff)
             df_black["Peritumoral_Mean"].append(peritumoral_even_diff)
             df_black["Stromal_Max"].append(stromal_odd_diff)
@@ -87,95 +102,89 @@ for i in range(0, len(process_list), 2):
 
         elif cohort == "White":
             df_white["donor"].append(donor)
+            df_white["Age"].append(age1)  # store age at timepoint 1
             df_white["Stromal_Mean"].append(stromal_even_diff)
             df_white["Peritumoral_Mean"].append(peritumoral_even_diff)
             df_white["Stromal_Max"].append(stromal_odd_diff)
             df_white["Peritumoral_Max"].append(peritumoral_odd_diff)
 
     else:
-        print(f"Year1: {year1}, Year2: {year2} -- Year2 shuld be > Year1 for Donor: {donor}")
+        print(f"Year1: {year1}, Year2: {year2} -- Year2 should be > Year1 for Donor: {donor}")
         exit()
-
 
 df_black = pd.DataFrame(df_black)
 df_white = pd.DataFrame(df_white)
 
-# Save to CSV with column names
-df_black.to_csv("data/hari_BC/csv/otsu3_black_cohort_differences_60_70.csv", index=False)
-df_white.to_csv("data/hari_BC/csv/otsu3_white_cohort_differences_60_70.csv", index=False)
+# Save to CSV
+df_black.to_csv("data/hari_BC/csv/otsu4_black_cohort_differences_60_70.csv", index=False)
+df_white.to_csv("data/hari_BC/csv/otsu4_white_cohort_differences_60_70.csv", index=False)
 
-# 2. Column groups
-mean_cols = ["Stromal_Mean", "Peritumoral_Mean"]
-max_cols = ["Stromal_Max", "Peritumoral_Max"]
+# ---- Split by age at first timepoint (year1) ----
+black_0_40   = df_black[df_black["Age"] <= 40]
+black_41_60  = df_black[(df_black["Age"] >= 41) & (df_black["Age"] <= 60)]
+white_0_40   = df_white[df_white["Age"] <= 40]
+white_41_60  = df_white[(df_white["Age"] >= 41) & (df_white["Age"] <= 60)]
 
-# 3. Prepare the data
-mean_data = [
-    df_black["Stromal_Mean"].dropna(),
-    df_white["Stromal_Mean"].dropna(),
-    df_black["Peritumoral_Mean"].dropna(),
-    df_white["Peritumoral_Mean"].dropna()
-]
+def make_boxplots(df_b, df_w, title_suffix, save_name):
+    # If both cohorts empty, skip
+    if len(df_b) == 0 and len(df_w) == 0:
+        print(f"[WARN] No data for {title_suffix}; skipping plot.")
+        return
 
-max_data = [
-    df_black["Stromal_Max"].dropna(),
-    df_white["Stromal_Max"].dropna(),
-    df_black["Peritumoral_Max"].dropna(),
-    df_white["Peritumoral_Max"].dropna()
-]
+    mean_data = [
+        df_b["Stromal_Mean"].dropna(),
+        df_w["Stromal_Mean"].dropna(),
+        df_b["Peritumoral_Mean"].dropna(),
+        df_w["Peritumoral_Mean"].dropna()
+    ]
+    max_data = [
+        df_b["Stromal_Max"].dropna(),
+        df_w["Stromal_Max"].dropna(),
+        df_b["Peritumoral_Max"].dropna(),
+        df_w["Peritumoral_Max"].dropna()
+    ]
 
-# 4. Create subplots
-fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
 
-# --- Means plot ---
-box1 = axes[0].boxplot(mean_data,
-                       labels=["Stromal:Black", "Stromal:White", "Peritumoral:Black", "Peritumoral:White"],
-                       patch_artist=True,
-                       medianprops=dict(color="black", linewidth=1),   # black median line
-                       showmeans=True, meanline=True,                 # mean line
-                       meanprops=dict(color="black", linestyle="--", linewidth=1))  # dotted mean line
+    # Means
+    box1 = axes[0].boxplot(mean_data,
+                           labels=["Stromal:Black", "Stromal:White", "Peritumoral:Black", "Peritumoral:White"],
+                           patch_artist=True,
+                           medianprops=dict(color="black", linewidth=1),
+                           showmeans=True, meanline=True,
+                           meanprops=dict(color="black", linestyle="--", linewidth=1))
+    mean_colors = ["#FF69B4", "#FF1493", "#9370DB", "#8A2BE2"]
+    for patch, color in zip(box1['boxes'], mean_colors):
+        patch.set_facecolor(color)
+    axes[0].set_title(f"Mean Values ({title_suffix})")
+    axes[0].set_ylabel("Value")
+    axes[0].legend(handles=[
+        plt.Line2D([0], [0], color="black", linewidth=1, label="Median"),
+        plt.Line2D([0], [0], color="black", linestyle="--", linewidth=1, label="Mean")
+    ], loc="upper left")
 
-# Colors for means
-mean_colors = ["#FF69B4", "#FF1493", "#9370DB", "#8A2BE2"]  # pinks & violets
-for patch, color in zip(box1['boxes'], mean_colors):
-    patch.set_facecolor(color)
+    # Max
+    box2 = axes[1].boxplot(max_data,
+                           labels=["Stromal:Black", "Stromal:White", "Peritumoral:Black", "Peritumoral:White"],
+                           patch_artist=True,
+                           medianprops=dict(color="black", linewidth=1),
+                           showmeans=True, meanline=True,
+                           meanprops=dict(color="black", linestyle="--", linewidth=1))
+    max_colors = ["#E88FBC", "#C42E7E", "#B69EE7", "#6C19BA"]
+    for patch, color in zip(box2['boxes'], max_colors):
+        patch.set_facecolor(color)
+    axes[1].set_title(f"Max Values ({title_suffix})")
+    axes[1].set_ylabel("Value")
+    axes[1].legend(handles=[
+        plt.Line2D([0], [0], color="black", linewidth=1, label="Median"),
+        plt.Line2D([0], [0], color="black", linestyle="--", linewidth=1, label="Mean")
+    ], loc="upper right")
 
-# Overlay median markers
-for i, line in enumerate(box1['medians']):
-    x, y = line.get_xydata()[1]   # (x, y) of median
+    plt.suptitle(f"Black vs White Cohort: Stromal & Peritumoral ({title_suffix})")
+    plt.tight_layout()
+    plt.savefig(f"data/hari_BC/plots/otsu4_BvW_comparison_{save_name}.png", dpi=300)
+    plt.close()
 
-axes[0].set_title("Mean Values")
-axes[0].set_ylabel("Value")
-
-# Legend for left plot (upper left)
-median_line = plt.Line2D([0], [0], color="black", linewidth=1, label="Median")
-mean_line = plt.Line2D([0], [0], color="black", linestyle="--", linewidth=1, label="Mean")
-axes[0].legend(handles=[median_line, mean_line], loc="upper left")
-
-# --- Max plot ---
-box2 = axes[1].boxplot(max_data,
-                       labels=["Stromal:Black", "Stromal:White", "Peritumoral:Black", "Peritumoral:White"],
-                       patch_artist=True,
-                       medianprops=dict(color="black", linewidth=1),   # black median line
-                       showmeans=True, meanline=True,
-                       meanprops=dict(color="black", linestyle="--", linewidth=1))  # dotted mean line
-
-# Colors for max
-max_colors = ["#FF69B4", "#FF1493", "#9370DB", "#8A2BE2"]
-for patch, color in zip(box2['boxes'], max_colors):
-    patch.set_facecolor(color)
-
-# Overlay median markers
-for i, line in enumerate(box2['medians']):
-    x, y = line.get_xydata()[1]   # (x, y) of median
-
-axes[1].set_title("Max Values")
-axes[1].set_ylabel("Value")
-
-# Legend for right plot (upper left)
-median_line = plt.Line2D([0], [0], color="black", linewidth=1, label="Median")
-mean_line = plt.Line2D([0], [0], color="black", linestyle="--", linewidth=1, label="Mean")
-axes[1].legend(handles=[median_line, mean_line], loc="upper right")
-
-plt.suptitle("Black vs White Cohort: Stromal & Peritumoral Boxplots")
-plt.tight_layout()
-plt.savefig("data/hari_BC/plots/otsu3_BvW_comparison_60_70.png", dpi=300)
+# Make the two requested plots (based only on age at timepoint 1)
+make_boxplots(black_0_40,  white_0_40,  "Age ≤ 40 ", "age_0-40")
+make_boxplots(black_41_60, white_41_60, "Age 41–60 ", "age_41-60")
