@@ -57,9 +57,9 @@ def extract_patient_level_features(slides, patch_features, output):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input_files', help='Input slide', default='/mnt/c/Users/sadap/Work/Projects/tma_processing/data/h&e/cores/')
-    parser.add_argument('--input_features', help='Input patche-level features', default='results/patch_features/')
-    parser.add_argument('--output', help='Output patient level features', default='results/patient_features/')
+    parser.add_argument('--input_files', help='Input slide', default='data/hari_BC/Original_renamed')
+    parser.add_argument('--input_features', help='Input patche-level features', default='data/hari_BC/otsu/otsu_patch_feats4_60_70')
+    parser.add_argument('--output', help='Output patient level features', default='data/hari_BC/otsu/otsu_patient_feats4_60_70/')
     args = parser.parse_args()
 
     cohorts = ['Black_cohort', 'White_cohort']
