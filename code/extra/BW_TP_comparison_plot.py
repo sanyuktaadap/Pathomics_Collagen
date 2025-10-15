@@ -3,22 +3,19 @@ from matplotlib.lines import Line2D
 import pandas as pd
 import numpy as np
 
-# Load your CSV
-df = pd.read_csv("data/hari_BC/csv/BnW_combined.csv")
-
 def plot_donor_data(df, x_col):
     """
     Plot donor data side-by-side for Black and White cohorts with separate Y-axis labels.
     Older donation year -> orange circle, newer donation year -> blue circle
     """
-    df["New_PID"] = df["New_PID"].astype(str)
+    df["PID"] = df["PID"].astype(str)
     races = ["Black", "White"]
     fig, axes = plt.subplots(1, 2, figsize=(14, 10), sharex=True)  # remove sharey=True
 
     for ax, race in zip(axes, races):
         race_df = df[df["Race"] == race].dropna(subset=[x_col])
 
-        for donor, group in race_df.groupby("New_PID"):
+        for donor, group in race_df.groupby("PID"):
             # Sort by Donation Year to determine older vs newer
             group_sorted = group.sort_values("Donation Year")
             colors = ["orange", "blue"]  # older -> orange, newer -> blue
@@ -33,7 +30,7 @@ def plot_donor_data(df, x_col):
                 ax.scatter(x, donor, color="black", marker="x", s=100, zorder=3)
 
         ax.set_title(f"{race} Cohort")
-        ax.set_ylabel("New_PID")
+        ax.set_ylabel("PID")
         ax.set_xlabel(x_col)
         ax.grid(True, linestyle="--", alpha=0.5)
 
@@ -47,14 +44,13 @@ def plot_donor_data(df, x_col):
     plt.suptitle(f"Donor Trajectories by Race: {x_col}", fontsize=14)
     plt.tight_layout()
     plt.savefig(f"data/hari_BC/plots/{x_col.replace(' ', '')}.png", dpi=300)
-    # plt.show()
 
 
 def plot_age_distribution(df, age_column):
-    df["New_PID"] = df["New_PID"].astype(str)
+    df["PID"] = df["PID"].astype(str)
 
     # Keep only the first timepoint per donor
-    df_first = df.sort_values(age_column).groupby("New_PID").first().reset_index()
+    df_first = df.sort_values(age_column).groupby("PID").first().reset_index()
 
     races = ["Black", "White"]
     colors = ["blue", "orange"]
@@ -87,7 +83,7 @@ def plot_age_distribution(df, age_column):
 
 def plot_donation_year_diff_hist(df):
 
-    df["New_PID"] = df["New_PID"].astype(str)
+    df["PID"] = df["PID"].astype(str)
 
     races = ["Black", "White"]
     colors = ["blue", "orange"]
@@ -95,7 +91,7 @@ def plot_donation_year_diff_hist(df):
     # Calculate year difference per donor
     diff_list = []
 
-    for pid, group in df.groupby("New_PID"):
+    for pid, group in df.groupby("PID"):
         group_sorted = group.sort_values("Donation Year")
         if len(group_sorted) < 2:
             continue  # skip donors with only one timepoint
@@ -103,7 +99,7 @@ def plot_donation_year_diff_hist(df):
         newer = group_sorted.iloc[1]["Donation Year"]
         diff = newer - older
         race = group_sorted.iloc[0]["Race"]
-        diff_list.append({"New_PID": pid, "Race": race, "Year_Diff": diff})
+        diff_list.append({"PID": pid, "Race": race, "Year_Diff": diff})
 
     diff_df = pd.DataFrame(diff_list)
 
@@ -133,7 +129,78 @@ def plot_donation_year_diff_hist(df):
     plt.tight_layout()
     plt.savefig("data/hari_BC/plots/donation_year_diff_hist.png", dpi=300)
 
+
+def plot_donor_data_by_age(df, x_col):
+    """
+    Plot donor data side-by-side for Black and White cohorts,
+    separately for donors with older donation age in 0–40 and 40–60.
+    Older donation year -> orange circle, newer donation year -> blue circle.
+    """
+
+    df["PID"] = df["PID"].astype(str)
+
+    # Determine the older (first) donation age for each donor
+    older_ages = (
+        df.sort_values("Donation Year")
+          .groupby("PID")
+          .first()["Age"]
+          .rename("OlderAge")
+    )
+    df = df.merge(older_ages, on="PID", how="left")
+
+    # Define age bins
+    age_bins = [(0, 40), (40, 60)]
+
+    for low, high in age_bins:
+        subset = df[(df["OlderAge"] >= low) & (df["OlderAge"] < high)]
+        if subset.empty:
+            print(f"No donors in age range {low}-{high}")
+            continue
+
+        races = ["Black", "White"]
+        fig, axes = plt.subplots(1, 2, figsize=(14, 10), sharex=True)
+
+        for ax, race in zip(axes, races):
+            race_df = subset[subset["Race"] == race].dropna(subset=[x_col])
+
+            for donor, group in race_df.groupby("PID"):
+                # Sort by Donation Year
+                group_sorted = group.sort_values("Donation Year")
+                colors = ["orange", "blue"]
+
+                # Connect points
+                ax.plot(group_sorted[x_col], [donor]*len(group_sorted),
+                        color="gray", alpha=0.5, linewidth=2, zorder=1)
+
+                # Scatter older/newer points
+                for x, color in zip(group_sorted[x_col], colors):
+                    ax.scatter(x, donor, color=color, edgecolor="black", s=150, zorder=2)
+                    ax.scatter(x, donor, color="black", marker="x", s=100, zorder=3)
+
+            ax.set_title(f"{race} Cohort")
+            ax.set_ylabel("PID")
+            ax.set_xlabel(x_col)
+            ax.grid(True, linestyle="--", alpha=0.5)
+
+        # Legend and title
+        legend_elements = [
+            Line2D([0], [0], marker='o', color='w', markerfacecolor='orange', markersize=10, label='Older Donation Year'),
+            Line2D([0], [0], marker='o', color='w', markerfacecolor='blue', markersize=10, label='Newer Donation Year'),
+        ]
+        axes[1].legend(handles=legend_elements, loc='upper left')
+
+        plt.suptitle(f"Donor Trajectories by Race: {x_col} (Older Age {low}–{high})", fontsize=14)
+        plt.tight_layout()
+        plt.savefig(f"data/hari_BC/{x_col.replace(' ', '')}_age_{low}-{high}.png", dpi=300)
+        plt.close(fig)
+
+
+
 # Example usage
+
+# Load your CSV
+df = pd.read_csv("data/hari_BC/csv/BnW_combined.csv")
+
 # plot_age_distribution(df, "Age")
 
 plot_donation_year_diff_hist(df)
@@ -143,3 +210,7 @@ plot_donation_year_diff_hist(df)
 # plot_donor_data(df, "ZEB1_H-score")
 # plot_donor_data(df, "FOXA1_Positivity")
 # plot_donor_data(df, "FOXA1_H-score")
+
+
+plot_donor_data_by_age(df, "Stromal_Mean")
+plot_donor_data_by_age(df, "Peritumoral_Mean")
