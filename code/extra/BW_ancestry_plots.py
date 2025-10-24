@@ -3,15 +3,67 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 
+
+def make_boxplots(df_b, df_w, title_suffix, save_name):
+    # If both cohorts empty, skip
+    if len(df_b) == 0 and len(df_w) == 0:
+        print(f"[WARN] No data for {title_suffix}; skipping plot.")
+        return
+
+    mean_data = [
+        df_b["Stromal_Mean"].dropna(),
+        df_w["Stromal_Mean"].dropna(),
+    ]
+
+    plt.figure(figsize=(5,7))
+
+    # Create the boxplot directly on the current Axes
+    box = plt.boxplot(
+        mean_data,
+        labels=["Stromal:Black", "Stromal:White"],
+        patch_artist=True,
+        widths=0.4,
+        medianprops=dict(color="black", linewidth=1),
+        showmeans=True,
+        meanline=True,
+        meanprops=dict(color="black", linestyle="--", linewidth=1)
+    )
+
+    # Fill box colors
+    mean_colors = ["#FA98C9", "#C31170"]
+    for patch, color in zip(box["boxes"], mean_colors):
+        patch.set_facecolor(color)
+
+    # Add horizontal zero line
+    plt.axhline(y=0, color="gray", linestyle="--", linewidth=1)
+
+    # Titles, labels, legend
+    plt.margins(x=0.02)
+    plt.title(f"Mean Entropy")
+    plt.ylabel("Entropy")
+    plt.legend(
+        handles=[
+            plt.Line2D([0], [0], color="black", linewidth=1, label="Median"),
+            plt.Line2D([0], [0], color="black", linestyle="--", linewidth=1, label="Mean")
+        ],
+        loc="upper left"
+    )
+
+    plt.suptitle(f"Black vs White: Stromal CF Entropy ({title_suffix})")
+    plt.tight_layout()
+    plt.savefig(f"data/hari_BC/otsu4_BvW_comparison_{save_name}.png", dpi=300)
+    plt.close()
+
+
 process_list = pd.read_csv("data/hari_BC/csv/BnW_combined.csv")
 patient_feats_fold_name = "otsu_patient_feats4_60_70"
 
 num_feats = 12
 donor_col = 0
-year_col = 5
-new_name_col = 7
-cohort_col = 8
-age_col = 4
+year_col = 4
+new_name_col = 5
+cohort_col = 6
+age_col = 3
 
 # Create B & W means and max csv  + Age
 df_black = {"donor": [],
@@ -47,9 +99,6 @@ for i in range(0, len(process_list), 2):
 
     # Age at first timepoint only (year2 can be anything)
     age1 = process_list.iloc[i, age_col]
-    # Exclude older subjects (outliers)
-    if age1 > 60:
-        continue
 
     new_name_1 = process_list.iloc[i, new_name_col].replace(".svs", ".csv")
     new_name_2 = process_list.iloc[i+1, new_name_col].replace(".svs", ".csv")
@@ -86,11 +135,11 @@ for i in range(0, len(process_list), 2):
     data2_peritumoral_odd = np.nanmax(data2_odd[num_feats//4:])
 
     if year2 > year1:
-        stromal_even_diff =  data2_stromal_even - data1_stromal_even
-        peritumoral_even_diff =  data2_peritumoral_even - data1_peritumoral_even
+        stromal_even_diff =  data1_stromal_even - data2_stromal_even
+        peritumoral_even_diff =  data1_peritumoral_even - data2_peritumoral_even
 
-        stromal_odd_diff =  data2_stromal_odd - data1_stromal_odd
-        peritumoral_odd_diff =  data2_peritumoral_odd - data1_peritumoral_odd
+        stromal_odd_diff =  data1_stromal_odd - data2_stromal_odd
+        peritumoral_odd_diff =  data1_peritumoral_odd - data2_peritumoral_odd
 
         if cohort == "Black":
             df_black["donor"].append(donor)
@@ -116,75 +165,19 @@ df_black = pd.DataFrame(df_black)
 df_white = pd.DataFrame(df_white)
 
 # Save to CSV
-df_black.to_csv("data/hari_BC/csv/otsu4_black_cohort_differences_60_70.csv", index=False)
-df_white.to_csv("data/hari_BC/csv/otsu4_white_cohort_differences_60_70.csv", index=False)
+df_black.to_csv("data/hari_BC/otsu4_black_cohort_differences_60_70_reverse_diff_all_subj.csv", index=False)
+df_white.to_csv("data/hari_BC/otsu4_white_cohort_differences_60_70_reverse_diff_all_subj.csv", index=False)
+
+# df_black = pd.read_csv("data/hari_BC/csv/otsu4_black_cohort_differences_60_70_reverse_diff_all_subj.csv")
+# df_white = pd.read_csv("data/hari_BC/csv/otsu4_white_cohort_differences_60_70_reverse_diff_all_subj.csv")
 
 # ---- Split by age at first timepoint (year1) ----
-black_0_40   = df_black[df_black["Age"] <= 40]
-black_41_60  = df_black[(df_black["Age"] >= 41) & (df_black["Age"] <= 60)]
-white_0_40   = df_white[df_white["Age"] <= 40]
-white_41_60  = df_white[(df_white["Age"] >= 41) & (df_white["Age"] <= 60)]
-
-def make_boxplots(df_b, df_w, title_suffix, save_name):
-    # If both cohorts empty, skip
-    if len(df_b) == 0 and len(df_w) == 0:
-        print(f"[WARN] No data for {title_suffix}; skipping plot.")
-        return
-
-    mean_data = [
-        df_b["Stromal_Mean"].dropna(),
-        df_w["Stromal_Mean"].dropna(),
-        df_b["Peritumoral_Mean"].dropna(),
-        df_w["Peritumoral_Mean"].dropna()
-    ]
-    max_data = [
-        df_b["Stromal_Max"].dropna(),
-        df_w["Stromal_Max"].dropna(),
-        df_b["Peritumoral_Max"].dropna(),
-        df_w["Peritumoral_Max"].dropna()
-    ]
-
-    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-
-    # Means
-    box1 = axes[0].boxplot(mean_data,
-                           labels=["Stromal:Black", "Stromal:White", "Peritumoral:Black", "Peritumoral:White"],
-                           patch_artist=True,
-                           medianprops=dict(color="black", linewidth=1),
-                           showmeans=True, meanline=True,
-                           meanprops=dict(color="black", linestyle="--", linewidth=1))
-    mean_colors = ["#FF69B4", "#FF1493", "#9370DB", "#8A2BE2"]
-    for patch, color in zip(box1['boxes'], mean_colors):
-        patch.set_facecolor(color)
-    axes[0].set_title(f"Mean Values ({title_suffix})")
-    axes[0].set_ylabel("Value")
-    axes[0].legend(handles=[
-        plt.Line2D([0], [0], color="black", linewidth=1, label="Median"),
-        plt.Line2D([0], [0], color="black", linestyle="--", linewidth=1, label="Mean")
-    ], loc="upper left")
-
-    # Max
-    box2 = axes[1].boxplot(max_data,
-                           labels=["Stromal:Black", "Stromal:White", "Peritumoral:Black", "Peritumoral:White"],
-                           patch_artist=True,
-                           medianprops=dict(color="black", linewidth=1),
-                           showmeans=True, meanline=True,
-                           meanprops=dict(color="black", linestyle="--", linewidth=1))
-    max_colors = ["#E88FBC", "#C42E7E", "#B69EE7", "#6C19BA"]
-    for patch, color in zip(box2['boxes'], max_colors):
-        patch.set_facecolor(color)
-    axes[1].set_title(f"Max Values ({title_suffix})")
-    axes[1].set_ylabel("Value")
-    axes[1].legend(handles=[
-        plt.Line2D([0], [0], color="black", linewidth=1, label="Median"),
-        plt.Line2D([0], [0], color="black", linestyle="--", linewidth=1, label="Mean")
-    ], loc="upper right")
-
-    plt.suptitle(f"Black vs White Cohort: Stromal & Peritumoral ({title_suffix})")
-    plt.tight_layout()
-    plt.savefig(f"data/hari_BC/plots/otsu4_BvW_comparison_{save_name}.png", dpi=300)
-    plt.close()
+black  = df_black[(df_black["Age"] >= 40) & (df_black["Age"] <= 60)]
+white  = df_white[(df_white["Age"] >= 40) & (df_white["Age"] <= 60)]
 
 # Make the two requested plots (based only on age at timepoint 1)
-make_boxplots(black_0_40,  white_0_40,  "Age ≤ 40 ", "age_0-40")
-make_boxplots(black_41_60, white_41_60, "Age 41–60 ", "age_41-60")
+# make_boxplots(black_0_40,  white_0_40,  "Age ≤ 40 ", "age_0-40")
+# make_boxplots(black_41_60, white_41_60, "Age 41–60 ", "age_41-60")
+# make_boxplots(black_25_55, white_25_55, "Age 25_55 ", "age_25_55")
+# make_boxplots(df_black, df_white, "all_subjects", "all_subjects")
+make_boxplots(black, white, "Age 40–60", "age_40-60")
