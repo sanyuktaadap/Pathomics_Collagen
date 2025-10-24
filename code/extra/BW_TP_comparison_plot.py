@@ -5,8 +5,8 @@ import numpy as np
 
 def plot_donor_data(df, x_col):
     """
-    Plot donor data side-by-side for Black and White cohorts with separate Y-axis labels.
-    Older donation year -> orange circle, newer donation year -> blue circle
+    Plot donor data side-by-side for Black and White cohorts
+    TP-1 -> red circle, TP-2 -> purple circle
     """
     df["PID"] = df["PID"].astype(str)
     races = ["Black", "White"]
@@ -18,7 +18,7 @@ def plot_donor_data(df, x_col):
         for donor, group in race_df.groupby("PID"):
             # Sort by Donation Year to determine older vs newer
             group_sorted = group.sort_values("Donation Year")
-            colors = ["orange", "blue"]  # older -> orange, newer -> blue
+            colors = ["purple", "red"]  # TP-1 -> red, TP-2 -> purple
 
             # Plot gray lines connecting the points
             ax.plot(group_sorted[x_col], [donor]*len(group_sorted),
@@ -26,8 +26,11 @@ def plot_donor_data(df, x_col):
 
             # Scatter points with colors based on order
             for x, color in zip(group_sorted[x_col], colors):
-                ax.scatter(x, donor, color=color, edgecolor="black", s=150, zorder=2)
-                ax.scatter(x, donor, color="black", marker="x", s=100, zorder=3)
+                ax.scatter(x, donor, color=color, edgecolor="black", s=300, zorder=2)
+
+                x_color = "black"
+
+                ax.scatter(x, donor, color=x_color, marker="x", s=250, zorder=3)
 
         ax.set_title(f"{race} Cohort")
         ax.set_ylabel("PID")
@@ -36,14 +39,14 @@ def plot_donor_data(df, x_col):
 
     # Add a single legend for the color meaning
     legend_elements = [
-        Line2D([0], [0], marker='o', color='w', markerfacecolor='orange', markersize=10, label='Older Donation Year'),
-        Line2D([0], [0], marker='o', color='w', markerfacecolor='blue', markersize=10, label='Newer Donation Year'),
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=15, label='TP-1'),
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='purple', markersize=15, label='TP-2'),
     ]
     axes[1].legend(handles=legend_elements, loc='upper left')
 
-    plt.suptitle(f"Donor Trajectories by Race: {x_col}", fontsize=14)
+    plt.suptitle(f"Donor Trajectories by Race: {x_col} (All subjects)", fontsize=14)
     plt.tight_layout()
-    plt.savefig(f"data/hari_BC/plots/{x_col.replace(' ', '')}.png", dpi=300)
+    plt.savefig(f"data/hari_BC/{x_col.replace(' ', '')}_all_subjects.png", dpi=300)
 
 
 def plot_age_distribution(df, age_column):
@@ -134,9 +137,11 @@ def plot_donor_data_by_age(df, x_col):
     """
     Plot donor data side-by-side for Black and White cohorts,
     separately for donors with older donation age in 0–40 and 40–60.
-    Older donation year -> orange circle, newer donation year -> blue circle.
+    Older donation year -> pink circle (first donation), newer donation year -> red circle (last donation).
+    Vertical lines showing average values for older (pink) and newer (red) donations per race.
+    Only plots donors with at least two timepoints (paired values).
     """
-
+    df = df.copy()
     df["PID"] = df["PID"].astype(str)
 
     # Determine the older (first) donation age for each donor
@@ -149,7 +154,7 @@ def plot_donor_data_by_age(df, x_col):
     df = df.merge(older_ages, on="PID", how="left")
 
     # Define age bins
-    age_bins = [(0, 40), (40, 60)]
+    age_bins = [(20, 40), (40, 60), (25, 55)]
 
     for low, high in age_bins:
         subset = df[(df["OlderAge"] >= low) & (df["OlderAge"] < high)]
@@ -163,19 +168,53 @@ def plot_donor_data_by_age(df, x_col):
         for ax, race in zip(axes, races):
             race_df = subset[subset["Race"] == race].dropna(subset=[x_col])
 
+            older_values = []
+            newer_values = []
+
             for donor, group in race_df.groupby("PID"):
-                # Sort by Donation Year
+                # Sort by donation year
                 group_sorted = group.sort_values("Donation Year")
-                colors = ["orange", "blue"]
+                values = group_sorted[x_col].values
+                n_vals = len(values)
+
+                # Only plot if the donor has both timepoints
+                if n_vals < 2:
+                    continue
 
                 # Connect points
-                ax.plot(group_sorted[x_col], [donor]*len(group_sorted),
-                        color="gray", alpha=0.5, linewidth=2, zorder=1)
+                ax.plot(values, [donor]*n_vals, color="gray", alpha=0.5, linewidth=2, zorder=1)
 
-                # Scatter older/newer points
-                for x, color in zip(group_sorted[x_col], colors):
-                    ax.scatter(x, donor, color=color, edgecolor="black", s=150, zorder=2)
-                    ax.scatter(x, donor, color="black", marker="x", s=100, zorder=3)
+                # Older (first)
+                x_old = values[0]
+                ax.scatter(x_old, donor, color="pink", edgecolor="black", s=150, zorder=2)
+                ax.scatter(x_old, donor, color="black", marker="x", s=100, zorder=3)
+                older_values.append(x_old)
+
+                # Newer (last)
+                x_new = values[-1]
+                ax.scatter(x_new, donor, color="red", edgecolor="black", s=150, zorder=2)
+                ax.scatter(x_new, donor, color="black", marker="x", s=100, zorder=3)
+                newer_values.append(x_new)
+
+                # Intermediate points, if any
+                if n_vals > 2:
+                    mid_vals = values[1:-1]
+                    ax.scatter(mid_vals, [donor]*len(mid_vals), color="gray", s=40, zorder=2)
+
+            # Plot average vertical lines
+            if older_values:
+                avg_older = np.mean(older_values)
+                ax.axvline(avg_older, color="pink", linestyle="--", linewidth=1)
+                ax.text(avg_older, 0.95, f"Avg older: {avg_older:.2f}", transform=ax.get_xaxis_transform(),
+                        color="pink", ha="left", va="top", fontsize=10,
+                        backgroundcolor='white', alpha=0.8)
+
+            if newer_values:
+                avg_newer = np.mean(newer_values)
+                ax.axvline(avg_newer, color="red", linestyle="--", linewidth=1)
+                ax.text(avg_newer, 0.95, f"Avg newer: {avg_newer:.2f}", transform=ax.get_xaxis_transform(),
+                        color="red", ha="left", va="top", fontsize=10,
+                        backgroundcolor='white', alpha=0.8)
 
             ax.set_title(f"{race} Cohort")
             ax.set_ylabel("PID")
@@ -184,16 +223,21 @@ def plot_donor_data_by_age(df, x_col):
 
         # Legend and title
         legend_elements = [
-            Line2D([0], [0], marker='o', color='w', markerfacecolor='orange', markersize=10, label='Older Donation Year'),
-            Line2D([0], [0], marker='o', color='w', markerfacecolor='blue', markersize=10, label='Newer Donation Year'),
+            Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=10, label='TP-1'),
+            Line2D([0], [0], marker='o', color='w', markerfacecolor='pink', markersize=10, label='TP-2'),
+            Line2D([0], [0], color='red', linestyle='--', linewidth=1, label='Average (TP-1)'),
+            Line2D([0], [0], color='pink', linestyle='--', linewidth=1, label='Average (TP-2)'),
         ]
         axes[1].legend(handles=legend_elements, loc='upper left')
 
-        plt.suptitle(f"Donor Trajectories by Race: {x_col} (Older Age {low}–{high})", fontsize=14)
+        plt.suptitle(f"Donor Trajectories by Race: {x_col} (Ages {low}–{high})", fontsize=14)
+        # plt.suptitle(f"Donor Trajectories by Race: {x_col} (All subjects)", fontsize=14)
         plt.tight_layout()
-        plt.savefig(f"data/hari_BC/{x_col.replace(' ', '')}_age_{low}-{high}.png", dpi=300)
+        out_file = f"data/hari_BC/{x_col.replace(' ', '')}_age_{low}-{high}.png"
+        # out_file = f"data/hari_BC/{x_col.replace(' ', '')}_all_subjects.png"
+        plt.savefig(out_file, dpi=300)
         plt.close(fig)
-
+        print(f"Saved plot: {out_file}")
 
 
 # Example usage
@@ -202,15 +246,11 @@ def plot_donor_data_by_age(df, x_col):
 df = pd.read_csv("data/hari_BC/csv/BnW_combined.csv")
 
 # plot_age_distribution(df, "Age")
+# plot_donation_year_diff_hist(df)
 
-plot_donation_year_diff_hist(df)
-
-# plot_donor_data(df, "Donation Year")
+plot_donor_data(df, "Donation Year")
 # plot_donor_data(df, "ZEB1_Positivity")
 # plot_donor_data(df, "ZEB1_H-score")
 # plot_donor_data(df, "FOXA1_Positivity")
 # plot_donor_data(df, "FOXA1_H-score")
-
-
-plot_donor_data_by_age(df, "Stromal_Mean")
-plot_donor_data_by_age(df, "Peritumoral_Mean")
+# plot_donor_data_by_age(df, "Stromal_Mean")
