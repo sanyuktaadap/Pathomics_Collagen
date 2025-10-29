@@ -18,7 +18,7 @@ from tqdm import tqdm
 
 # Parameters for analysis
 # win_sizes = [100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600]  # List of window sizes for feature extraction
-win_sizes = [60,65,70]
+win_sizes = [60, 65, 70]
 filter_scale = 3   # Filter scale for BIFS computation
 feature_descriptor = 5  # Descriptor to identify collagen features
 orient_num = 180 // 10  # Number of orientation bins
@@ -75,6 +75,7 @@ for file in tqdm(patches_files):
     collagen_mask = collagen_mask.astype(np.uint16)
     collagen_mask_np_u8 = collagen_mask.copy().astype(np.uint8)
     contours, hierarchy = cv2.findContours(collagen_mask_np_u8, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
     for i, contour in enumerate(contours):
         cv2.drawContours(collagen_mask, [contour], -1, color=(i + 1), thickness=-1)  # Label connected regions
 
@@ -123,10 +124,10 @@ for file in tqdm(patches_files):
 
     # Dilate the epi_mask to define peritumoral regions
     im_dilated = cv2.imread(epi_mask_path, cv2.IMREAD_GRAYSCALE)
-    for _ in range(25):
+    for _ in range(15):
         im_dilated = cv2.dilate(im_dilated, np.ones((5, 5), np.uint8), iterations=1)
     im_new = im_dilated
-    for _ in range(150):
+    for _ in range(30):
         im_new = cv2.dilate(im_new, np.ones((5, 5), np.uint8), iterations=1)
 
     # Generate a collagen fiber mask for peritumoral areas
