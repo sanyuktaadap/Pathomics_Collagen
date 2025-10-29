@@ -4,7 +4,7 @@
 
 ## Packages Required
 Python was used for this study.<br>
-The packages required for running this code are PyTorch, Numpy, Openslide, PIL, OpenCV, Pandas, Sklearn, and Matplotlib.<br>
+The packages required for running this code are Numpy, Openslide, PIL, OpenCV, Pandas, Sklearn, scipy, skimage Matplotlib, tqdm, .<br>
 
 
 ## Workflow for the study
