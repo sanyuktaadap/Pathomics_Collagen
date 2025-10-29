@@ -12,7 +12,7 @@ import math
 
 def extract_collagen_feats(patch,
                  collagen_mask,
-                 win_sizes=[200, 250, 300, 350, 400, 450, 500, 550, 600],
+                 win_sizes=[60, 65, 70],
                  ):
 
     # collagen centroid and orientation information extraction
