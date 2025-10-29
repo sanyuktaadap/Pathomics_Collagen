@@ -55,7 +55,7 @@ def is_edge_patch_array(patch_array, patch_size=3000, intensity_thresh=220):
         return False
 
 
-def generate_patch_mask(image_path, mask_save_path, patch_size=100, stride=None, intensity_thresh=220):
+def generate_patch_fg_mask(image_path, mask_save_path, patch_size=100, stride=None, intensity_thresh=220):
     """
     Generates a binary mask for the entire image using patch-based classification.
     - White (255) = foreground/tissue
@@ -81,9 +81,10 @@ def generate_patch_mask(image_path, mask_save_path, patch_size=100, stride=None,
             if not is_edge:
                 mask[y:y+patch_size, x:x+patch_size] = 255  # Foreground
 
-    # --- Save mask ---
-    os.makedirs(os.path.dirname(mask_save_path), exist_ok=True)
-    cv2.imwrite(mask_save_path, mask)
+    return mask
+    # # --- Save mask ---
+    # os.makedirs(os.path.dirname(mask_save_path), exist_ok=True)
+    # cv2.imwrite(mask_save_path, mask)
 
     # return mask
 
@@ -100,4 +101,5 @@ for cohort in cohorts:
         image_name = os.path.basename(image_path)
         print(image_name)
         mask_save_path = os.path.join(output_path, image_name)
-        generate_patch_mask(image_path, mask_save_path, patch_size=100, stride=100, intensity_thresh=235)
+        mask = generate_patch_fg_mask(image_path, mask_save_path, patch_size=3000, stride=3000, intensity_thresh=235)
+        cv2.imwrite(mask_save_path, mask)
