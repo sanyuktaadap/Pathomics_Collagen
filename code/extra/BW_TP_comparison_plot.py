@@ -18,7 +18,7 @@ def plot_donor_data(df, x_col):
         for donor, group in race_df.groupby("PID"):
             # Sort by Donation Year to determine older vs newer
             group_sorted = group.sort_values("Donation Year")
-            colors = ["purple", "red"]  # TP-1 -> red, TP-2 -> purple
+            colors = ["red", "purple"]  # TP-1 -> red, TP-2 -> purple
 
             # Plot gray lines connecting the points
             ax.plot(group_sorted[x_col], [donor]*len(group_sorted),
@@ -46,7 +46,7 @@ def plot_donor_data(df, x_col):
 
     plt.suptitle(f"Donor Trajectories by Race: {x_col} (All subjects)", fontsize=14)
     plt.tight_layout()
-    plt.savefig(f"data/hari_BC/{x_col.replace(' ', '')}_all_subjects.png", dpi=300)
+    plt.savefig(f"data/hari_BC/plots/{x_col.replace(' ', '')}_all_subjects.png", dpi=300)
 
 
 def plot_age_distribution(df, age_column):
